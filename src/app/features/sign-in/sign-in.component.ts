@@ -63,7 +63,8 @@ export class SignInComponent implements OnInit {
   async ngOnInit (): Promise<void> {
     const params = this.route.snapshot.queryParamMap;
     this.mode.set( params.get( 'as' ) === 'shopper' ? 'shopper' : 'merchant' );
-    this.next = safeNext( params.get( 'next' ) ) || ( this.mode() === 'shopper' ? '/account' : '/app' );
+    // ?returnUrl= is what the universal menu's Sign in sends (the page you were on).
+    this.next = safeNext( params.get( 'next' ) ) || safeNext( params.get( 'returnUrl' ) ) || ( this.mode() === 'shopper' ? '/account' : '/app' );
     this.storeSlug = params.get( 'store' ) || '';
     // "Track this order" after a guest checkout: the order's email, ready to send a code.
     if ( !this.route.snapshot.data['verify'] ) this.email.set( ( params.get( 'email' ) || '' ).slice( 0, 200 ) );
