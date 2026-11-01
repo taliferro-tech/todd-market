@@ -4,14 +4,14 @@ import { Router } from '@angular/router';
 
 import { apiErrorMessage } from '../../../services/market-api.service';
 import { ImportRequest, MerchantService, SalesforceCredentials } from '../../../services/merchant.service';
+import { shrinkPhoto } from '../../../shared/shrink-photo';
 
-type Source = 'shopify' | 'salesforce' | 'csv' | 'files' | 'printful';
+type Source = 'shopify' | 'salesforce' | 'csv' | 'files' | 'printful' | 'manual';
 
 const MAX_CSV_BYTES = 6 * 1024 * 1024;
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const MAX_PHOTOS = 60;
 const MAX_PDFS = 5;
-const PHOTO_EDGE = 1600;
 
 interface UploadItem { key: string; name: string; kind: 'photo' | 'pdf'; status: 'uploading' | 'done' | 'failed'; id?: string; preview?: string; error?: string }
 
@@ -67,6 +67,11 @@ interface UploadItem { key: string; name: string; kind: 'photo' | 'pdf'; status:
           <label class="field"><span class="tm-label">Store name</span>
             <input class="tm-input" placeholder="16Ahead Tees" [ngModel]="storeName()" (ngModelChange)="storeName.set($event)"></label>
         }
+        @case ('manual') {
+          <p class="note">Start with an empty store and add your products one at a time: photos, price, sizes and colours, and how many you have of each. You can import a catalog later too.</p>
+          <label class="field"><span class="tm-label">Store name</span>
+            <input class="tm-input" placeholder="Cameron's Dress Shoes" [ngModel]="storeName()" (ngModelChange)="storeName.set($event)"></label>
+        }
         @case ('files') {
           <label class="drop">
             <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf" (change)="onFiles($event)">
@@ -92,9 +97,9 @@ interface UploadItem { key: string; name: string; kind: 'photo' | 'pdf'; status:
 
       @if (error()) { <span class="tm-error" role="alert">{{ error() }}</span> }
       <div class="actions">
-        <button type="button" class="tm-btn tm-btn--primary next" [disabled]="!canContinue() || busy()" (click)="next()">{{ busy() ? 'Reading your catalog…' : 'Next: your brand' }}</button>
+        <button type="button" class="tm-btn tm-btn--primary next" [disabled]="!canContinue() || busy()" (click)="next()">{{ busy() ? (source() === 'manual' ? 'Opening your store…' : 'Reading your catalog…') : (source() === 'manual' ? 'Next: add your first product' : 'Next: your brand') }}</button>
         @if (source() === 'files') { @if (uploadSummary()) { <span class="meta">{{ uploadSummary() }} ready. We read them while you set up your brand.</span> } }
-        @else {
+        @else if (source() !== 'manual') {
           @if (found(); as f) { <span class="meta">{{ f.productCount.toLocaleString() }} products found{{ f.unpriced ? ' · ' + f.unpriced + ' without a price' : '' }}</span> }
           @else if (checking()) { <span class="meta">Checking…</span> }
         }
@@ -143,6 +148,7 @@ export class ImportComponent implements OnInit {
     { key: 'csv', mark: 'CSV', label: 'CSV file', sub: 'Any spreadsheet export' },
     { key: 'files', mark: '↑', label: 'Upload files', sub: 'Photos and PDF catalogs' },
     { key: 'printful', mark: 'PF', label: 'Printful', sub: 'Print on demand, no inventory' },
+    { key: 'manual', mark: '+', label: 'Add by hand', sub: 'One product at a time' },
   ];
 
   readonly source = signal<Source>( 'shopify' );
@@ -177,6 +183,7 @@ export class ImportComponent implements OnInit {
     if ( this.source() === 'csv' ) return !!this.csvText() && this.storeName().trim().length > 0;
     if ( this.source() === 'printful' ) return !!this.found() && this.storeName().trim().length > 0;
     if ( this.source() === 'salesforce' ) return !!this.found() && this.sfComplete() && this.storeName().trim().length > 0;
+    if ( this.source() === 'manual' ) return this.storeName().trim().length > 0;
     if ( this.source() === 'files' ) {
       const list = this.uploads();
       return list.some( ( u ) => u.status === 'done' ) && !list.some( ( u ) => u.status === 'uploading' ) && this.storeName().trim().length > 0;
@@ -299,6 +306,8 @@ export class ImportComponent implements OnInit {
         ? { source: 'printful', printfulToken: this.printfulToken().trim(), storeName: this.storeName() }
       : this.source() === 'salesforce'
         ? { source: 'salesforce', salesforce: this.sfRequest(), storeName: this.storeName() }
+      : this.source() === 'manual'
+        ? { source: 'manual', storeName: this.storeName() }
       : this.source() === 'files'
         ? { source: 'files', storeName: this.storeName(), uploadIds: this.uploads().filter( ( u ) => u.status === 'done' && u.id ).map( ( u ) => u.id! ) }
         : { source: 'csv', csvText: this.csvText(), fileName: this.fileName(), storeName: this.storeName() };
@@ -306,7 +315,7 @@ export class ImportComponent implements OnInit {
     this.error.set( '' );
     try {
       await this.merchant.import( request );
-      await this.router.navigateByUrl( '/app/onboarding/brand' );
+      await this.router.navigateByUrl( request.source === 'manual' ? '/app/products/new' : '/app/onboarding/brand' );
     } catch ( error ) {
       this.error.set( apiErrorMessage( error, "We couldn't read that catalog. Check it and try again." ) );
     } finally {
@@ -337,24 +346,4 @@ function readAsDataUrl ( file: Blob ): Promise<string> {
     reader.onerror = () => reject( new Error( "Couldn't read the file" ) );
     reader.readAsDataURL( file );
   } );
-}
-
-/** Long edge at most 1600px, as JPEG. HEIC only decodes where the browser can (Safari). */
-async function shrinkPhoto ( file: File ): Promise<string> {
-  let bitmap: ImageBitmap;
-  try {
-    bitmap = await createImageBitmap( file );
-  } catch {
-    throw new Error( "Can't read this photo. Save it as JPG." );
-  }
-  const scale = Math.min( 1, PHOTO_EDGE / Math.max( bitmap.width, bitmap.height ) );
-  const canvas = document.createElement( 'canvas' );
-  canvas.width = Math.round( bitmap.width * scale );
-  canvas.height = Math.round( bitmap.height * scale );
-  const ctx = canvas.getContext( '2d' )!;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect( 0, 0, canvas.width, canvas.height );
-  ctx.drawImage( bitmap, 0, 0, canvas.width, canvas.height );
-  bitmap.close();
-  return canvas.toDataURL( 'image/jpeg', 0.85 );
 }

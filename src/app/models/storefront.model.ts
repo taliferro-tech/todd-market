@@ -36,7 +36,13 @@ export interface StoreWithHome extends PublicStore { home: StoreHome }
 /** "All products", a category, or "See all". */
 export interface BrowseResult { title: string; products: ProductCard[] }
 
-export interface Variant { id: string; title: string; priceCents: number | null; available: boolean; options: Record<string, string> }
+export interface Variant {
+  id: string; title: string; priceCents: number | null; available: boolean; options: Record<string, string>;
+  /** "Only N left": set at or under the store's low-stock threshold. */
+  left?: number | null;
+  /** Sold out but still selling (backorder). */
+  backorder?: boolean;
+}
 
 export interface PublicProduct {
   id: string;
@@ -51,6 +57,13 @@ export interface PublicProduct {
   images: string[];
   available: boolean;
   variants: Variant[];
+  /** Products with options (size, colour), in order, for the pickers. */
+  options?: { name: string; values: string[] }[];
+  compareAtCents?: number | null;
+  /** Stock-tracked products: what a sold-out size does (notify, or keep selling on backorder). */
+  soldOutRule?: 'notify' | 'hide' | 'backorder' | null;
+  /** Backorder: the date it ships by (YYYY-MM-DD). */
+  shipsBy?: string | null;
 }
 
 export interface NetworkStore {

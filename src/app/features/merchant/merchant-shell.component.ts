@@ -32,8 +32,9 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
           </ol>
         } @else if (merchant.store()) {
           <nav class="nav" aria-label="Your store">
-            <a routerLink="/app/dashboard" [class.on]="section() === 'dashboard'">Referrals</a>
+            <a routerLink="/app/products" [class.on]="section() === 'products'">Products</a>
             <a routerLink="/app/orders" [class.on]="section() === 'orders'">Orders</a>
+            <a routerLink="/app/dashboard" [class.on]="section() === 'dashboard'">Referrals</a>
             <a routerLink="/app/settings" [class.on]="section() === 'settings'">Settings</a>
             <a [routerLink]="['/', merchant.store()!.slug]">View store</a>
           </nav>

@@ -35,7 +35,32 @@ import { MarketApiService } from './market-api.service';
 
 export interface PricingProduct { id: string; title: string; image: string | null; priceCents: number | null; hidden: boolean }
 
-export type ImportSource = 'shopify' | 'csv' | 'files' | 'salesforce' | 'printful';
+export type ImportSource = 'shopify' | 'csv' | 'files' | 'salesforce' | 'printful' | 'manual';
+
+export type StockStatus = 'untracked' | 'in' | 'low' | 'some-out' | 'out';
+export type SoldOutRule = 'notify' | 'hide' | 'backorder';
+/** One row of Products (6a). */
+export interface ProductRow {
+  id: string; title: string; image: string | null; priceCents: number | null; hidden: boolean; draft: boolean;
+  summary: string; variantCount: number; waiting: number;
+  stock: { status: StockStatus; units: number | null; outTitles: string[]; lowTitles: string[] };
+}
+export interface ProductOption { name: string; values: string[] }
+export interface EditorVariant { id?: string; title?: string; options: Record<string, string>; stock: number | null; available?: boolean }
+/** Add / Edit product (6b). */
+export interface EditorProduct {
+  id: string; title: string; description: string; priceCents: number | null; compareAtCents: number | null;
+  collectionIds: string[]; images: string[]; options: ProductOption[]; variants: EditorVariant[];
+  trackStock: boolean; lowStockAt: number; soldOutRule: SoldOutRule; shipsBy: string | null;
+  hidden: boolean; draft: boolean; source: string;
+}
+export interface ProductSave {
+  title: string; description: string; priceCents: number | null; compareAtCents: number | null;
+  collectionId?: string | null; newCollection?: string; images: string[]; options: ProductOption[];
+  variants: { options: Record<string, string>; stock: number; stockWas?: number | null }[];
+  trackStock: boolean; lowStockAt: number; soldOutRule: SoldOutRule; shipsBy: string | null; publish?: boolean;
+}
+export interface CollectionRef { id: string; name: string }
 
 export interface SalesforceCredentials { shortCode: string; organizationId: string; siteId: string; clientId: string; clientSecret: string; categoryId: string }
 
@@ -156,6 +181,38 @@ export class MerchantService {
 
   disconnectDomain (): Promise<unknown> {
     return this.api.delete( '/merchant/settings/domain' );
+  }
+
+  /** Products (6a): every product with stock and status, and the store's collections. */
+  products (): Promise<{ products: ProductRow[]; collections: CollectionRef[] }> {
+    return this.api.get( '/merchant/products' );
+  }
+
+  product ( id: string ): Promise<{ product: EditorProduct; collections: CollectionRef[] }> {
+    return this.api.get( `/merchant/products/${ encodeURIComponent( id ) }` );
+  }
+
+  /** Add product: a new product ({ publish: true } shows it in the store; otherwise a draft). */
+  createProduct ( body: ProductSave ): Promise<EditorProduct> {
+    return this.api.post( '/merchant/products', body );
+  }
+
+  saveProduct ( id: string, body: ProductSave ): Promise<EditorProduct> {
+    return this.api.put( `/merchant/products/${ encodeURIComponent( id ) }`, body );
+  }
+
+  deleteProduct ( id: string ): Promise<unknown> {
+    return this.api.delete( `/merchant/products/${ encodeURIComponent( id ) }` );
+  }
+
+  /** One product photo (already shrunk), saved for the editor. */
+  productPhoto ( dataUrl: string ): Promise<{ url: string }> {
+    return this.api.post( '/merchant/products/photos', { dataUrl } );
+  }
+
+  /** "Write it from the photos". */
+  describeProduct ( images: string[], title: string ): Promise<{ description: string }> {
+    return this.api.post( '/merchant/products/describe', { images, title } );
   }
 
   /** Settings → Products: preview ({ add: false }) or add one supplier spec sheet (.xlsx). */

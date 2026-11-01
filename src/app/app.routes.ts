@@ -33,6 +33,9 @@ export const routes: Routes = [
       { path: 'onboarding/build', title: 'Building | 16Ahead Store', loadComponent: () => import( './features/merchant/onboarding/build.component' ).then( ( m ) => m.BuildComponent ) },
       { path: 'onboarding/get-paid', title: 'Get paid | 16Ahead Store', loadComponent: () => import( './features/merchant/onboarding/get-paid.component' ).then( ( m ) => m.GetPaidComponent ) },
       { path: 'onboarding/live', title: 'Live | 16Ahead Store', loadComponent: () => import( './features/merchant/onboarding/live.component' ).then( ( m ) => m.LiveComponent ) },
+      { path: 'products', title: 'Products | 16Ahead Store', loadComponent: () => import( './features/merchant/products/products.component' ).then( ( m ) => m.ProductsComponent ) },
+      { path: 'products/new', title: 'Add product | 16Ahead Store', loadComponent: () => import( './features/merchant/products/product-editor.component' ).then( ( m ) => m.ProductEditorComponent ) },
+      { path: 'products/:id', title: 'Edit product | 16Ahead Store', loadComponent: () => import( './features/merchant/products/product-editor.component' ).then( ( m ) => m.ProductEditorComponent ) },
       { path: 'orders', title: 'Orders | 16Ahead Store', loadComponent: () => import( './features/merchant/orders/orders.component' ).then( ( m ) => m.OrdersComponent ) },
       { path: 'dashboard', title: 'Referrals | 16Ahead Store', loadComponent: () => import( './features/merchant/dashboard/dashboard.component' ).then( ( m ) => m.DashboardComponent ) },
       { path: 'settings', pathMatch: 'full', redirectTo: 'settings/store' },
@@ -59,6 +62,7 @@ export const routes: Routes = [
   { path: 's/:slug/checkout', redirectTo: ':slug/checkout' },
   { path: 's/:slug', redirectTo: ':slug' },
   // Stores live at /<slug>; every named path above is reserved (RESERVED_SLUGS in the backend).
+  { path: ':slug/products/:productId', loadComponent: () => import( './features/storefront/product.component' ).then( ( m ) => m.ProductComponent ) },
   { path: ':slug/checkout', loadComponent: () => import( './features/checkout/checkout.component' ).then( ( m ) => m.CheckoutComponent ) },
   { path: ':slug', loadComponent: () => import( './features/storefront/store.component' ).then( ( m ) => m.StoreComponent ) },
   { path: '**', loadComponent: () => import( './features/not-found/not-found.component' ).then( ( m ) => m.NotFoundComponent ) },

@@ -1,0 +1,190 @@
+<div class="bar">
+  <a class="back" routerLink="/app/products" aria-label="Back to Products"><tm-icon name="arrow-left" [size]="18" /></a>
+  <div class="crumb"><span class="muted">Products</span><strong>{{ isNew() ? 'Add product' : 'Edit product' }}</strong></div>
+  @if (!loading() && (isNew() || loaded())) {
+    <div class="bar__actions">
+      @if (!isNew()) { <button type="button" class="tm-btn tm-btn--ghost danger" [disabled]="!!saving()" (click)="remove()"><tm-icon name="trash" [size]="16" />Delete</button> }
+      @if (isLive()) {
+        <button type="button" class="tm-btn" [disabled]="!!saving()" (click)="save('draft')">{{ saving() === 'draft' ? 'Saving…' : 'Unpublish' }}</button>
+        <button type="button" class="tm-btn tm-btn--primary" [disabled]="!!saving()" (click)="save('publish')">{{ saving() === 'publish' ? 'Saving…' : 'Save' }}</button>
+      } @else {
+        <button type="button" class="tm-btn" [disabled]="!!saving()" (click)="save('draft')">{{ saving() === 'draft' ? 'Saving…' : 'Save draft' }}</button>
+        <button type="button" class="tm-btn tm-btn--primary" [disabled]="!!saving()" (click)="save('publish')">{{ saving() === 'publish' ? 'Publishing…' : 'Publish product' }}</button>
+      }
+    </div>
+  }
+</div>
+
+@if (error()) { <p class="tm-error banner" role="alert">{{ error() }}</p> }
+
+@if (loading()) {
+  <p class="muted">Opening…</p>
+} @else if (isNew() || loaded()) {
+<div class="layout">
+  <div class="form">
+    <!-- Photos -->
+    <section class="card" [class.invalid]="invalid()['photos']">
+      <h2 class="label">Photos</h2>
+      <div class="photos" [class.drag]="dragging()" (dragover)="$event.preventDefault(); dragging.set(true)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+        @for (p of slots(); track $index; let i = $index) {
+          @if (p) {
+            <div class="slot filled" [class.main]="i === 0" [class.failed]="p.status === 'failed'">
+              @if (p.url || p.preview) { <img [src]="p.url || p.preview" alt=""> }
+              @if (p.status === 'uploading') { <span class="slot__state">Uploading…</span> }
+              @if (p.status === 'failed') { <span class="slot__state">{{ p.error }}</span> }
+              @if (i === 0) { <span class="slot__tag">Main photo</span> }
+              @else if (p.status === 'done') { <button type="button" class="slot__main" (click)="makeMain(p.key)">Make main</button> }
+              <button type="button" class="slot__x" [attr.aria-label]="'Remove photo ' + (i + 1)" (click)="removePhoto(p.key)"><tm-icon name="x" [size]="14" /></button>
+            </div>
+          } @else {
+            <label class="slot" [class.main]="i === 0">
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple (change)="onPhotoInput($event)">
+              <tm-icon name="image" [size]="i === 0 ? 24 : 20" />
+              <span class="slot__label">{{ i === 0 ? 'Main photo' : 'Another photo' }}</span>
+              <span class="slot__sub">drop here or <u>browse files</u></span>
+            </label>
+          }
+        }
+      </div>
+      @if (invalid()['photos']) { <span class="tm-error">{{ invalid()['photos'] }}</span> }
+    </section>
+
+    <!-- Details -->
+    <section class="card">
+      <h2 class="label">Details</h2>
+      <label class="field"><span class="name">Name</span>
+        <input class="tm-input" [class.tm-input--error]="invalid()['title']" maxlength="120" placeholder="Walnut Cap-Toe Oxford" [ngModel]="title()" (ngModelChange)="title.set($event)"></label>
+      <div class="field">
+        <span class="name-row"><label class="name" for="pe-desc">Description</label>
+          <button type="button" class="ai" [disabled]="!photoUrls().length || describing()" (click)="writeDescription()" [title]="photoUrls().length ? '' : 'Add a photo first'"><tm-icon name="sparkles" [size]="15" />{{ describing() ? 'Writing…' : 'Write it from the photos' }}</button></span>
+        <textarea id="pe-desc" class="tm-input area" rows="4" maxlength="5000" [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+      </div>
+      <div class="three">
+        <label class="field"><span class="name">Price</span>
+          <input class="tm-input" [class.tm-input--error]="invalid()['price']" inputmode="decimal" placeholder="$0.00" [ngModel]="price()" (ngModelChange)="price.set($event)"></label>
+        <label class="field"><span class="name">Compare-at price <span class="muted">optional</span></span>
+          <input class="tm-input" [class.tm-input--error]="invalid()['compareAt']" inputmode="decimal" placeholder="$0.00" [ngModel]="compareAt()" (ngModelChange)="compareAt.set($event)"></label>
+        <label class="field"><span class="name">Collection</span>
+          <select class="tm-input select" [ngModel]="collectionId()" (ngModelChange)="collectionId.set($event)">
+            <option value="">None</option>
+            @for (c of collections(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+            <option value="__new">New collection…</option>
+          </select></label>
+      </div>
+      @if (collectionId() === '__new') {
+        <label class="field"><span class="name">New collection name</span>
+          <input class="tm-input" [class.tm-input--error]="invalid()['collection']" maxlength="60" placeholder="Oxfords" [ngModel]="newCollection()" (ngModelChange)="newCollection.set($event)"></label>
+      }
+    </section>
+
+    <!-- Options -->
+    <section class="card">
+      <h2 class="label">Options</h2>
+      @for (o of options(); track o.name) {
+        <div class="opt">
+          <span class="opt__name">{{ optionLabel(o.name) }}</span>
+          <div class="chips">
+            @for (v of o.values; track v) {
+              <span class="chip">
+                @if (isColor(o.name)) { <span class="sw" [style.background]="swatch(v) || 'var(--surface2)'"></span> }
+                {{ v }}<button type="button" class="chip__x" [attr.aria-label]="'Remove ' + v" (click)="removeValue(o.name, v)"><tm-icon name="x" [size]="12" /></button>
+              </span>
+            }
+            @if (addingTo() === o.name) {
+              <input class="add-input" tmAutofocus [placeholder]="o.name === 'size' ? '8, 9, 10' : 'Add ' + o.name" [ngModel]="addText()" (ngModelChange)="addText.set($event)"
+                (keydown.enter)="$event.preventDefault(); addValues(o.name)" (blur)="addValues(o.name)" [attr.aria-label]="'Add ' + o.name">
+            } @else {
+              <button type="button" class="chip add" (click)="startAdding(o.name)">+ Add {{ o.name }}</button>
+            }
+          </div>
+          @if (!o.values.length) { <button type="button" class="opt__drop" [attr.aria-label]="'Remove option ' + o.name" (click)="removeOption(o.name)"><tm-icon name="x" [size]="14" /></button> }
+        </div>
+      }
+      @if (options().length < 3) {
+        @if (addingOption()) {
+          <div class="opt"><input class="add-input" tmAutofocus placeholder="Option name, like material" [ngModel]="optionName()" (ngModelChange)="optionName.set($event)"
+            (keydown.enter)="$event.preventDefault(); addOption()" (blur)="addOption()" aria-label="New option name"></div>
+        } @else {
+          <button type="button" class="more" (click)="addingOption.set(true)">+ Add another option</button>
+        }
+      }
+      <p class="hint">{{ variants().length === 1 && !activeOptions().length ? 'No options: one size.' : variants().length + ' variants: every ' + activeOptions().map(nameOf).join(' × ') + ' combination.' }}</p>
+    </section>
+
+    <!-- Inventory -->
+    <section class="card" [class.invalid]="invalid()['stock']">
+      <div class="label-row">
+        <h2 class="label">Inventory</h2>
+        <label class="switch"><span>Track stock</span>
+          <input type="checkbox" role="switch" [checked]="trackStock()" (change)="trackStock.set($any($event.target).checked)">
+          <span class="track" aria-hidden="true"><span class="knob"></span></span></label>
+      </div>
+      @if (trackStock()) {
+        <p class="hint">Each order takes one off the count for that variant. Returns put it back.</p>
+        <div class="panels">
+          @for (panel of panels(); track panel.title) {
+            <div class="panel">
+              <div class="panel__head">
+                <span>@if (panel.swatch) { <span class="sw" [style.background]="swatch(panel.swatch) || 'var(--surface2)'"></span> }<strong>{{ panel.title }}</strong></span>
+                <span class="muted">{{ panel.total }} {{ panel.total === 1 ? 'unit' : 'units' }}</span>
+              </div>
+              @for (row of panel.rows; track row.key) {
+                <div class="stock-row">
+                  <span>{{ row.label }}</span>
+                  <span class="tm-tag" [class]="stockTag(row.key).tint">{{ stockTag(row.key).label }}</span>
+                  <input class="tm-input qty" [class.tm-input--error]="stockInvalid(row.key)" type="number" min="0" step="1" inputmode="numeric" placeholder="0"
+                    [attr.aria-label]="'Stock for ' + (row.title || 'this product')" [ngModel]="stock()[row.key]" (ngModelChange)="setStock(row.key, $event == null ? '' : '' + $event)">
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="warn">
+          <label for="pe-low">Warn shoppers when stock is at or below</label>
+          <input id="pe-low" class="tm-input low" type="number" min="0" max="999" step="1" [ngModel]="lowStockAt()" (ngModelChange)="lowStockAt.set('' + ($event ?? ''))">
+          <span class="muted">They see “Only {{ low() || 1 }} left{{ names().includes('size') ? ' in size ' + (activeOptions()[0].values[0] || '9') : '' }}”.</span>
+        </div>
+      } @else {
+        <p class="hint">Stock isn't tracked: it never sells out, and shoppers never see “Only N left”.</p>
+      }
+    </section>
+
+    <!-- When a size sells out -->
+    @if (trackStock()) {
+      <section class="card">
+        <h2 class="label">When a size sells out</h2>
+        <div class="rules" role="radiogroup" aria-label="When a size sells out">
+          <button type="button" role="radio" class="rule" [class.on]="soldOutRule() === 'notify'" [attr.aria-checked]="soldOutRule() === 'notify'" (click)="soldOutRule.set('notify')">
+            <span class="radio"></span><span><strong>Show it as sold out</strong><span class="muted">Recommended. Shoppers still see the size, marked sold out, so you know what they want.</span></span>
+          </button>
+          <button type="button" role="radio" class="rule" [class.on]="soldOutRule() === 'hide'" [attr.aria-checked]="soldOutRule() === 'hide'" (click)="soldOutRule.set('hide')">
+            <span class="radio"></span><span><strong>Hide the size</strong><span class="muted">Shoppers don't see it until you restock.</span></span>
+          </button>
+          <button type="button" role="radio" class="rule" [class.on]="soldOutRule() === 'backorder'" [attr.aria-checked]="soldOutRule() === 'backorder'" (click)="soldOutRule.set('backorder')">
+            <span class="radio"></span><span><strong>Keep selling it (backorder)</strong><span class="muted">Orders wait until you restock, and shoppers see the expected ship date.</span></span>
+          </button>
+        </div>
+        @if (soldOutRule() === 'backorder') {
+          <label class="field ship"><span class="name">Expected ship date <span class="muted">optional</span></span>
+            <input class="tm-input" [class.tm-input--error]="invalid()['shipsBy']" type="date" [ngModel]="shipsBy()" (ngModelChange)="shipsBy.set($event || '')"></label>
+        }
+      </section>
+    }
+  </div>
+
+  <!-- Shopper preview -->
+  <aside class="preview">
+    <h2 class="label">Shopper preview</h2>
+    <div class="pcard">
+      <div class="pcard__img">@if (mainPhoto(); as m) { <img [src]="m" alt=""> } @else { <tm-icon name="image" [size]="32" /> }</div>
+      <div class="pcard__body">
+        <span class="muted small">{{ storeName() }}</span>
+        <strong class="pcard__title">{{ title() || 'Product name' }}</strong>
+        <span class="pcard__price">{{ priceCents() != null ? (priceCents() | money) : '$0' }}@if (compareAtCents(); as c) { <s class="muted">{{ c | money }}</s> }</span>
+        <span class="tm-tag" [class]="previewStatus().tint">{{ previewStatus().label }}</span>
+      </div>
+    </div>
+    <p class="muted small">{{ previewNote() }}</p>
+  </aside>
+</div>
+}

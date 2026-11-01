@@ -154,9 +154,10 @@ export class StoreComponent implements OnInit {
     if ( typeof window !== 'undefined' ) window.scrollTo( { top: 0 } );
   }
 
-  /** A product card: search for it, which shows it with what goes with it. */
+  /** A product card: its product page. */
   openProduct ( card: ProductCard ): void {
-    void this.ask( card.title );
+    const store = this.store();
+    if ( store ) void this.router.navigate( ['/', store.slug, 'products', card.id] );
   }
 
   isSaved ( card: ProductCard ): boolean {

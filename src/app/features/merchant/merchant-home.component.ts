@@ -22,6 +22,8 @@ export class MerchantHomeComponent implements OnInit {
       const store = await this.merchant.load();
       if ( !store ) await this.router.navigateByUrl( '/app/onboarding/import', { replaceUrl: true } );
       else if ( store.status === 'live' ) await this.router.navigateByUrl( '/app/dashboard', { replaceUrl: true } );
+      // Added by hand, nothing added yet: back to Add product.
+      else if ( store.source === 'manual' && !store.stats?.productCount ) await this.router.navigateByUrl( '/app/products/new', { replaceUrl: true } );
       else await this.router.navigateByUrl( `/app/onboarding/${ store.onboardingStep || 'import' }`, { replaceUrl: true } );
     } catch ( error ) {
       this.error.set( apiErrorMessage( error, "We couldn't open your store. Refresh to try again." ) );

@@ -1,0 +1,77 @@
+@if (store(); as s) {
+  <div class="shop tm-branded" [style]="style()">
+    @if (s.isSample) { <div class="sample">This is a sample store to show how 16Ahead Store works. Checkout is turned off.</div> }
+    <header class="bar">
+      <a class="brand" [routerLink]="['/', s.slug]" [attr.aria-label]="s.name + ' home'">
+        <span class="tm-store-mark mark-sm">@if (s.brand.logoUrl) { <img [src]="s.brand.logoUrl" alt=""> } @else { {{ initial() }} }</span>
+        <span class="brand__name">{{ s.name }}</span>
+      </a>
+      <button type="button" class="bag-pill" (click)="bag.open.set(true)" [attr.aria-label]="'Bag, ' + bag.count() + ' items'"><tm-icon name="shopping-bag" [size]="16" />{{ bag.count() }}</button>
+    </header>
+
+    @if (product(); as p) {
+    <main class="pdp">
+      <div class="gallery">
+        <div class="gallery__main">@if (images()[photo()]; as img) { <img [src]="img" [alt]="p.title"> } @else { <tm-icon name="shopping-bag" [size]="48" /> }</div>
+        @if (images().length > 1) {
+          <div class="thumbs" role="group" aria-label="Photos">
+            @for (img of images(); track img; let i = $index) {
+              <button type="button" class="thumb" [class.on]="photo() === i" [attr.aria-label]="'Photo ' + (i + 1)" [attr.aria-pressed]="photo() === i" (click)="photo.set(i)"><img [src]="img" alt=""></button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="info">
+        <a class="store-link" [routerLink]="['/', s.slug]">{{ s.name }}</a>
+        <h1>{{ p.title }}</h1>
+        <p class="price">{{ priceCents() | money }}@if (p.compareAtCents; as c) { <s>{{ c | money }}</s> }</p>
+
+        @for (o of options(); track o.name) {
+          <div class="picker">
+            <span class="picker__label">{{ label(o.name) }}@if (picked()[o.name]; as v) { <span class="muted">· {{ v }}</span> }</span>
+            <div class="pills" [class.sizes]="o.name === 'size'" role="radiogroup" [attr.aria-label]="label(o.name)">
+              @for (v of o.values; track v) {
+                <button type="button" role="radio" class="pill" [class.on]="picked()[o.name] === v" [class.out]="marksOut(o.name) && isOut(o.name, v)"
+                  [attr.aria-checked]="picked()[o.name] === v" [attr.aria-label]="v + (marksOut(o.name) && isOut(o.name, v) ? ', sold out' : '')" (click)="pick(o.name, v)">
+                  @if (o.name === 'color' || o.name === 'colour') { <span class="sw" [style.background]="swatch(v) || 'var(--surface2)'"></span> }
+                  {{ v }}@if (marksOut(o.name) && isOut(o.name, v)) { <tm-icon name="bell" [size]="13" /> }
+                </button>
+              }
+            </div>
+          </div>
+        }
+        @if (hasSoldOut()) { <p class="helper">A bell means sold out. You can still pick it to see it.</p> }
+
+        @switch (state()) {
+          @case ('out') {
+            <div class="soldout">
+              <strong>{{ selectionLabel() ? (selectionLabel().charAt(0).toUpperCase() + selectionLabel().slice(1)) + ' is sold out' : 'Sold out' }}</strong>
+              <span>Pick another {{ sizeOption() ? 'size' : 'option' }}, or check back soon.</span>
+            </div>
+          }
+          @case ('none') {
+            <div class="soldout"><strong>Not available in that combination</strong><span>Pick another {{ sizeOption() ? 'size' : 'option' }}.</span></div>
+          }
+          @default {
+            @switch (state()) {
+              @case ('low') { <span class="tm-tag tm-tint-yellow">Only {{ variant()?.left }} left{{ selectionLabel() ? ' in ' + selectionLabel() : '' }}</span> }
+              @case ('backorder') { <span class="tm-tag tm-tint-blue">On backorder{{ p.shipsBy ? ' · ships by ' + shipDate(p.shipsBy) : '' }}</span> }
+              @default { <span class="tm-tag tm-tint-green">In stock{{ selectionLabel() ? ' in ' + selectionLabel() : '' }}</span> }
+            }
+            <button type="button" class="tm-btn tm-btn--primary buy" [disabled]="s.isSample" (click)="addToBag()">{{ added() ? 'Added · add another' : 'Add to bag · ' + (priceCents() | money) }}</button>
+            @if (delivery()) { <p class="delivery"><tm-icon name="truck" [size]="16" />{{ delivery() }}</p> }
+          }
+        }
+
+        @if (p.description) { <div class="desc"><h2>Details</h2><p>{{ p.description }}</p></div> }
+      </div>
+    </main>
+    }
+  </div>
+  <tm-bag-drawer [homeStoreId]="s.id" [storeSlug]="s.slug" />
+} @else if (notFound()) {
+  <main class="missing"><h1>That item isn't here.</h1><p>It may have sold through, or the link is old.</p><a class="tm-btn tm-btn--primary" routerLink="/">Back to 16Ahead Store</a></main>
+} @else {
+  <p class="loading">Opening…</p>
+}
