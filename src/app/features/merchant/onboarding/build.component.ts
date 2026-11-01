@@ -24,6 +24,7 @@ const POLL_MS = 1200;
             </li>
           }
         </ol>
+        @if (j.status !== 'done' && j.status !== 'failed' && !error()) { <p class="working" role="status">Working on it. This usually takes a minute or two.</p> }
       }
       @if (error()) {
         <span class="tm-error" role="alert">{{ error() }}</span>
@@ -39,13 +40,16 @@ const POLL_MS = 1200;
     .line { width: 2.5px; flex: 1; min-height: 26px; background: var(--surface2); border-radius: 2px; }
     .done .node { background: var(--cyan); border-color: var(--cyan); }
     .done .line { background: var(--cyan); }
-    .active .node { width: 16px; height: 16px; margin-top: 3px; background: var(--blue); border-color: var(--blue); animation: tmPulse 1.4s ease-in-out infinite; }
+    /* The step in progress spins, so it's clear the build is still working. */
+    .active .node { width: 18px; height: 18px; margin-top: 2px; border-color: var(--surface2); border-top-color: var(--blue); border-right-color: var(--blue); animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .failed .node { background: var(--t-pink-fg); border-color: var(--t-pink-fg); }
     .text { padding: 0 0 22px; display: flex; flex-direction: column; gap: 2px; }
     .text strong { font-size: 16px; font-weight: 600; color: var(--muted); }
     .done .text strong, .active .text strong { color: var(--text); }
     .text span { font-size: 13px; color: var(--muted); }
-    @media (prefers-reduced-motion: reduce) { .active .node { animation: none; } }
+    .working { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+    @media (prefers-reduced-motion: reduce) { .active .node { animation: tmPulse 1.4s ease-in-out infinite; } }
   `],
 } )
 export class BuildComponent implements OnInit {
@@ -66,7 +70,7 @@ export class BuildComponent implements OnInit {
     const store = await this.merchant.current().catch( () => null );
     if ( store ) {
       this.storeName.set( store.name );
-      this.subline.set( `Imported from ${ ( { shopify: 'Shopify', csv: 'a CSV file' } as Record<string, string> )[store.source] || 'your catalog' }` );
+      this.subline.set( `Imported from ${ ( { shopify: 'Shopify', csv: 'a CSV file', manual: 'the products you added' } as Record<string, string> )[store.source] || 'your catalog' }` );
     }
     this.jobId = this.route.snapshot.queryParamMap.get( 'job' ) || ( await this.merchant.latestBuild().catch( () => null ) )?.id || '';
     if ( !this.jobId ) {
