@@ -4,6 +4,9 @@ describe( 'After the sale', () => {
   it( 'the store ships the order and marks it delivered', () => {
     cy.on( 'window:confirm', () => true );
     cy.visit( '/app/orders' );
+    // The shopper ticked "Email me news and offers" at checkout (02): one customer to email, through Email Creator.
+    cy.get( '[data-cy=email-customers]' ).should( 'contain', '1 customer asked for your emails at checkout' )
+      .find( 'a' ).should( 'have.attr', 'href', 'https://emails.16ahead.com/templates?to=customers' );
     cy.contains( 'article.order', 'Linen shirt' ).within( () => {
       cy.contains( 'button', 'Shipped' ).click();
       cy.get( 'input.track' ).type( '1Z999AA10123456784{enter}' ).blur();

@@ -4,6 +4,8 @@ import { BagItem } from '../models/storefront.model';
 import { MarketApiService } from './market-api.service';
 
 export interface Address { name: string; phone: string; line1: string; city: string; state: string; postal_code: string }
+/** emailOptIns: the stores the shopper ticked "Email me news and offers" for. */
+export interface CheckoutBody { email: string; address: Address; lines: unknown[]; shipping: Record<string, string>; emailOptIns: string[] }
 export interface ShippingOption { id: string; label: string; detail: string; priceCents: number; minDays: number; maxDays: number }
 export interface QuotePart {
   storeId: string; storeName: string; storeSlug: string; accountId: string;
@@ -31,14 +33,14 @@ const TOKENS_KEY = 'tm-order-tokens';
 export class CheckoutService {
   private readonly api = inject( MarketApiService );
 
-  start ( body: { email: string; address: Address; lines: unknown[]; shipping: Record<string, string> } ): Promise<Quote> {
+  start ( body: CheckoutBody ): Promise<Quote> {
     return this.api.post<Quote>( '/checkout/start', body ).then( ( quote ) => {
       if ( quote.viewToken ) this.saveToken( quote.orderId, quote.viewToken );
       return quote;
     } );
   }
 
-  update ( orderId: string, body: { email: string; address: Address; lines: unknown[]; shipping: Record<string, string> } ): Promise<Quote> {
+  update ( orderId: string, body: CheckoutBody ): Promise<Quote> {
     return this.api.put( `/checkout/${ orderId }${ this.q( orderId ) }`, body );
   }
 

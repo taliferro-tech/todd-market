@@ -247,7 +247,8 @@ export class MerchantService {
     return this.api.patch( '/merchant/referral-controls', body );
   }
 
-  orders (): Promise<{ orders: MerchantOrder[]; returns: MerchantReturn[] }> {
+  /** emailOptIns: buyers who ticked "Email me news and offers" (null when it couldn't be counted). */
+  orders (): Promise<{ orders: MerchantOrder[]; returns: MerchantReturn[]; emailOptIns?: number | null }> {
     return this.api.get( '/merchant/orders' );
   }
 

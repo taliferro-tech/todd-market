@@ -17,6 +17,9 @@
           <label class="field"><span class="tm-label">Email</span>
             <input class="tm-input" [class.tm-input--error]="emailError()" type="email" autocomplete="email" [ngModel]="email()" (ngModelChange)="setEmail($event)"></label>
           @if (emailError()) { <span class="tm-error">Enter a valid email address.</span> }
+          @for (g of bag.groups(); track g.storeId) {
+            <label class="optin" data-cy="email-opt-in"><input type="checkbox" [checked]="optIns()[g.storeId] === true" (change)="setOptIn(g.storeId, $any($event.target).checked)"> Email me news and offers from {{ g.storeName }}</label>
+          }
         </section>
 
         <section class="card">

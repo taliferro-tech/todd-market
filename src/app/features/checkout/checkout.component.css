@@ -26,6 +26,8 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
 .rate__text span { font-size: 13px; color: var(--muted); }
 .rate__price { font-size: 14px; font-weight: 700; }
 .muted { font-size: 13px; color: var(--muted); }
+.optin { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer; }
+.optin input { width: 16px; height: 16px; margin: 0; accent-color: var(--blue); flex: none; }
 .payment:empty { display: none; }
 
 .summary { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 12px; padding: 22px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-md); }

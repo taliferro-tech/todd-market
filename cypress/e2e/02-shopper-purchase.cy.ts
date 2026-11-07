@@ -44,6 +44,11 @@ describe( 'Shopper: find and buy', () => {
     cy.contains( 'label', 'ZIP' ).find( 'input' ).type( ADDRESS.zip );
 
     cy.get( '[data-cy=fake-card]', { timeout: 15000 } ).should( 'exist' );
+    // Buying isn't agreeing to marketing: the store's "Email me news and offers" box starts unticked.
+    cy.intercept( 'PUT', '**/checkout/TM-*' ).as( 'update' );
+    cy.get( '[data-cy=email-opt-in]' ).should( 'have.length', 1 ).and( 'contain', 'Email me news and offers from' )
+      .find( 'input' ).should( 'not.be.checked' ).check();
+    cy.wait( '@update' ).its( 'request.body.emailOptIns' ).should( 'have.length', 1 );
     cy.get( 'button.pay' ).should( 'not.be.disabled' ).click();
 
     cy.location( 'pathname', { timeout: 15000 } ).should( 'match', /^\/order\/TM-/ );

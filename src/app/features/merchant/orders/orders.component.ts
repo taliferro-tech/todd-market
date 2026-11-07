@@ -19,6 +19,13 @@ import { MoneyPipe } from '../../../shared/money.pipe';
   template: `
     <section class="wrap">
       <h1 class="tm-h1">Orders</h1>
+      @if (emailOptIns() !== null) {
+        <div class="customers" data-cy="email-customers">
+          <div><h2>Email your customers</h2>
+            <span class="muted">{{ emailOptInsLine() }}</span></div>
+          @if (emailOptIns()) { <a class="tm-btn tm-btn--primary" [href]="emailCreatorUrl" target="_blank" rel="noopener">Write an email</a> }
+        </div>
+      }
       @if (openReturns().length) {
         <div class="returns">
           <h2>Returns to receive</h2>
@@ -78,6 +85,8 @@ import { MoneyPipe } from '../../../shared/money.pipe';
     .ret { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--bg); color: var(--text); font-size: 14px; flex-wrap: wrap; }
     .returns.ship { background: var(--t-cyan); color: var(--t-cyan-fg); }
     .shipit { display: flex; gap: 8px; flex-wrap: wrap; }
+    .customers { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 18px 20px; border-radius: 20px; background: var(--surface); }
+    .customers h2 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
     .order { display: flex; flex-direction: column; gap: 8px; padding: 20px; border-radius: 20px; background: var(--surface); }
     .top { display: flex; justify-content: space-between; gap: 10px; }
     ul { list-style: none; margin: 0; padding: 0; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
@@ -103,15 +112,24 @@ export class OrdersComponent implements OnInit {
   readonly openReturns = computed( () => this.returns().filter( ( r ) => r.status === 'requested' ) );
   readonly toShip = computed( () => this.returns().filter( ( r ) => r.status === 'exchange-to-ship' ) );
   readonly shipTracking = signal<Record<string, string>>( {} );
+  /** Buyers who ticked "Email me news and offers" at checkout; null hides the card. */
+  readonly emailOptIns = signal<number | null>( null );
+  readonly emailOptInsLine = computed( () => {
+    const n = this.emailOptIns() || 0;
+    if ( !n ) return 'When shoppers tick “Email me news and offers” at checkout, you can send them an email from Email Creator.';
+    return `${ n } ${ n === 1 ? 'customer' : 'customers' } asked for your emails at checkout. Make one in Email Creator and send it to them through Outreach.`;
+  } );
+  readonly emailCreatorUrl = 'https://emails.16ahead.com/templates?to=customers';
   readonly swapDetail = ( r: MerchantReturn ) => ( r.exchange || [] ).map( ( x ) => `${ x.title }: ${ x.fromTitle || 'as bought' } → ${ x.toTitle } × ${ x.quantity }` ).join( ', ' );
   readonly swapLabel = ( r: MerchantReturn ) => ( r.exchange || [] ).map( ( x ) => x.toTitle ).join( ', ' );
   readonly itemLabel = ( i: { title: string; quantity: number } ) => `${ i.title } × ${ i.quantity }`;
 
   async ngOnInit (): Promise<void> {
     try {
-      const { orders, returns } = await this.merchant.orders();
+      const { orders, returns, emailOptIns } = await this.merchant.orders();
       this.orders.set( orders );
       this.returns.set( returns );
+      this.emailOptIns.set( typeof emailOptIns === 'number' ? emailOptIns : null );
     } catch ( error ) {
       this.error.set( apiErrorMessage( error, "We couldn't load your orders." ) );
     } finally {

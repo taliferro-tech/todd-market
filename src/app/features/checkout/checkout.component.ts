@@ -52,6 +52,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   readonly cardReady = signal( false );
   readonly error = signal( '' );
   readonly emailError = signal( false );
+  /** "Email me news and offers from <store>", per store: unticked unless the shopper ticks it. */
+  readonly optIns = signal<Record<string, boolean>>( {} );
+  /** The opt-ins the open order has; pay() re-sends them first if they changed since. */
+  private sentOptIns = '';
 
   private stripe: Stripe | null = null;
   private elements: StripeElements | null = null;
@@ -100,6 +104,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.scheduleQuote();
   }
 
+  setOptIn ( storeId: string, on: boolean ): void {
+    this.optIns.update( ( o ) => ( { ...o, [storeId]: on } ) );
+    this.scheduleQuote( 0 );
+  }
+
+  private emailOptIns (): string[] {
+    const on = this.optIns();
+    return this.bag.groups().map( ( g ) => g.storeId ).filter( ( id ) => on[id] === true );
+  }
+
   chooseShipping ( storeId: string, rateId: string ): void {
     this.shipping.update( ( s ) => ( { ...s, [storeId]: rateId } ) );
     this.scheduleQuote( 0 );
@@ -120,6 +134,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if ( !quote || !this.stripe || !this.elements ) { this.error.set( 'Fill in your delivery details first.' ); return; }
     this.paying.set( true );
     try {
+      // A box ticked a moment ago: put it on the order before paying.
+      if ( this.sentOptIns !== this.emailOptIns().join( ',' ) ) await this.refreshQuote();
       const { error: submitError } = await this.elements.submit();
       if ( submitError ) throw new Error( submitError.message || 'Enter your card number to continue.' );
       const { error } = await this.stripe.confirmSetup( {
@@ -168,10 +184,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if ( !this.ready() || !this.bag.count() ) return;
     this.quoting.set( true );
     this.error.set( '' );
-    const body = { email: this.email().trim(), address: this.address(), lines: CheckoutService.lines( this.bag.items() ), shipping: this.shipping() };
+    const body = { email: this.email().trim(), address: this.address(), lines: CheckoutService.lines( this.bag.items() ), shipping: this.shipping(), emailOptIns: this.emailOptIns() };
     try {
       const current = this.quote();
       const next = current ? { ...current, ...( await this.checkout.update( current.orderId, body ) ) } : await this.checkout.start( body );
+      this.sentOptIns = body.emailOptIns.join( ',' );
       this.quote.set( next );
       if ( !current ) this.mountCard( next.clientSecret! );
     } catch ( error ) {
