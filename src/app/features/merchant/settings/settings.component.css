@@ -92,3 +92,11 @@ select.tm-input { appearance: auto; }
 .sheet__state { display: flex; align-items: center; gap: 8px; }
 .add-sheets { align-self: flex-start; }
 @media (max-width: 600px) { .sheet { flex-wrap: wrap; } }
+
+.logo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px; border-radius: 16px; background: var(--bg); }
+.logo__img { width: 64px; height: 64px; border-radius: 16px; background: var(--surface); display: grid; place-items: center; overflow: hidden; font-size: 12px; flex: none; }
+.logo__img img { width: 100%; height: 100%; object-fit: contain; }
+.logo__text { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; font-size: 14px; }
+.logo__error { color: var(--red, #c0392b); font-size: 13px; }
+.logo__actions { display: flex; gap: 8px; }
+.logo__actions .disabled { opacity: .6; pointer-events: none; }

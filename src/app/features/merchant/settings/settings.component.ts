@@ -59,6 +59,12 @@ export class SettingsComponent implements OnInit {
   readonly saving = signal( false );
   readonly savedNote = signal( false );
   readonly error = signal( '' );
+  /** The store's logo (Settings → Store): shown at the top of the store page. */
+  readonly logoUrl = signal<string | null>( null );
+  readonly logoBusy = signal( false );
+  readonly logoError = signal( '' );
+  /** A live store's web address is on links and ads, so it can't change. */
+  readonly slugLocked = computed( () => this.store()?.status === 'live' );
 
   readonly dirty = computed( () => !!this.draft() && JSON.stringify( this.draft() ) !== this.saved() );
   readonly policy = computed( () => policySentence( this.draft()?.settings.returns ) );
@@ -298,8 +304,47 @@ export class SettingsComponent implements OnInit {
     }
   }
 
+  async onLogo ( event: Event ): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if ( !file ) return;
+    this.logoError.set( '' );
+    if ( !/^image\/(png|jpeg|webp|svg\+xml)$/.test( file.type ) ) {
+      this.logoError.set( 'Use a PNG, JPG, WebP or SVG file.' );
+      return;
+    }
+    if ( file.size > 1024 * 1024 ) {
+      this.logoError.set( 'That logo is over 1 MB. Use a smaller file.' );
+      return;
+    }
+    this.logoBusy.set( true );
+    try {
+      const brand = await this.merchant.saveBrand( { logoDataUrl: await readAsDataUrl( file ) } );
+      this.logoUrl.set( brand.logoUrl ?? null );
+    } catch ( error ) {
+      this.logoError.set( apiErrorMessage( error, "We couldn't save that logo. Try again." ) );
+    } finally {
+      this.logoBusy.set( false );
+    }
+  }
+
+  async removeLogo (): Promise<void> {
+    this.logoBusy.set( true );
+    this.logoError.set( '' );
+    try {
+      await this.merchant.saveBrand( { removeLogo: true } );
+      this.logoUrl.set( null );
+    } catch ( error ) {
+      this.logoError.set( apiErrorMessage( error, "We couldn't remove the logo. Try again." ) );
+    } finally {
+      this.logoBusy.set( false );
+    }
+  }
+
   private reset ( store: MerchantStore ): void {
     this.store.set( store );
+    this.logoUrl.set( store.brand?.logoUrl ?? null );
     const draft: Draft = { name: store.name, slug: store.slug, directoryCategory: store.directoryCategory, settings: JSON.parse( JSON.stringify( store.settings ) ) };
     this.saved.set( JSON.stringify( draft ) );
     this.draft.set( draft );

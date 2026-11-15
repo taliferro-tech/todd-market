@@ -9,10 +9,29 @@
       @switch (tab()) {
         @case ('store') {
           <div class="card grid2">
+            <div class="logo wide">
+              <span class="logo__img">@if (logoUrl(); as url) { <img [src]="url" alt="Your logo"> } @else { <span class="muted">No logo</span> }</span>
+              <div class="logo__text">
+                <strong>Logo</strong>
+                <span class="muted">Shown at the top of your store page. PNG, JPG, WebP or SVG, up to 1 MB. A square image works best.</span>
+                @if (logoError()) { <span class="logo__error" role="alert">{{ logoError() }}</span> }
+              </div>
+              <div class="logo__actions">
+                <label class="tm-btn tm-btn--ghost" [class.disabled]="logoBusy()">{{ logoBusy() ? 'Saving…' : (logoUrl() ? 'Change logo' : 'Upload logo') }}
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden [disabled]="logoBusy()" (change)="onLogo($event)"></label>
+                @if (logoUrl() && !logoBusy()) { <button type="button" class="tm-btn tm-btn--ghost" (click)="removeLogo()">Remove</button> }
+              </div>
+            </div>
             <label class="field"><span class="tm-label">Store name</span><input class="tm-input" [ngModel]="d.name" (ngModelChange)="setTop('name', $event)"></label>
             <label class="field"><span class="tm-label">Support email</span><input class="tm-input" type="email" [ngModel]="d.settings.store.email" (ngModelChange)="patch('store', { email: $event })"></label>
-            <label class="field wide"><span class="tm-label">Web address</span>
-              <span class="addr"><span>16ahead.store/</span><input class="tm-input" [ngModel]="d.slug" (ngModelChange)="setTop('slug', $event.toLowerCase())"></span></label>
+            @if (slugLocked()) {
+              <div class="field wide"><span class="tm-label">Web address</span>
+                <span class="addr"><a [href]="'https://16ahead.store/' + d.slug" target="_blank" rel="noopener">16ahead.store/{{ d.slug }}</a></span>
+                <span class="muted">Your store is live, so its address stays the same. Links and ads already point to it.</span></div>
+            } @else {
+              <label class="field wide"><span class="tm-label">Web address</span>
+                <span class="addr"><span>16ahead.store/</span><input class="tm-input" [ngModel]="d.slug" (ngModelChange)="setTop('slug', $event.toLowerCase())"></span></label>
+            }
             <label class="field"><span class="tm-label">Category (Shop stores)</span>
               <select class="tm-input" [ngModel]="d.directoryCategory" (ngModelChange)="setTop('directoryCategory', $event)">
                 @for (c of directoryCategories(); track c) { <option [value]="c">{{ c }}</option> }
