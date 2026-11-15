@@ -286,7 +286,7 @@ export class SettingsComponent implements OnInit {
   }
 
   async disconnectDomain (): Promise<void> {
-    if ( typeof window !== 'undefined' && !window.confirm( `Disconnect ${ this.domain()?.name }? Your store stays at market.taliferro.tech/${ this.draft()?.slug }.` ) ) return;
+    if ( typeof window !== 'undefined' && !window.confirm( `Disconnect ${ this.domain()?.name }? Your store stays at 16ahead.store/${ this.draft()?.slug }.` ) ) return;
     this.domainBusy.set( true );
     try {
       await this.merchant.disconnectDomain();

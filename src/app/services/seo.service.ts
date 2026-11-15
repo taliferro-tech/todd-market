@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
 export interface SeoPage {
   title: string;
   description: string;
-  /** Path on market.taliferro.tech, for og:url. The canonical link follows the router (canonical-url.ts). */
+  /** Path on 16ahead.store, for og:url. The canonical link follows the router (canonical-url.ts). */
   path: string;
   /** Leave the page out of search results (account, sign in, stores in draft). */
   noindex?: boolean;

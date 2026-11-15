@@ -2,7 +2,7 @@ import packageJson from '../../package.json';
 
 export const environment = {
   production: false,
-  PLATFORM_URL: 'https://market.taliferro.tech',
+  PLATFORM_URL: 'https://16ahead.store',
   /** Same origin: firebase.json rewrites /api/** to the marketApi function (proxy.conf.json in dev). */
   apiBase: '/api',
   VERSION: String( packageJson.version || '' ),

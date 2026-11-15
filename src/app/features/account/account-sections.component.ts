@@ -53,7 +53,7 @@ type Section = 'saved' | 'addresses' | 'payment-methods' | 'security';
         @if (passkeySupported) {
           <button type="button" class="tm-btn tm-btn--primary add-key" [disabled]="busy()" (click)="addPasskey()">{{ busy() ? 'Waiting for your device…' : 'Add a passkey' }}</button>
         } @else {
-          <p class="muted">Passkeys can be added on market.taliferro.tech in a browser that supports them.</p>
+          <p class="muted">Passkeys can be added on 16ahead.store in a browser that supports them.</p>
         }
         @if (notice()) { <p class="notice">{{ notice() }}</p> }
         <div class="row addr"><span><strong>Sign-in methods</strong><span>Apple, Google, or a code sent to your email. All of them open the same 16Ahead account.</span></span></div>
