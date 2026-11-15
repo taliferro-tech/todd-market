@@ -1,10 +1,10 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
-import { BrowseResult, ListingItem, Look, ProductCard, PublicProduct, PublicStore, SearchResult, StoreHome } from '../../models/storefront.model';
+import { BrowseResult, ListingItem, Look, ProductCard, PublicProduct, PublicStore, SearchResult, StoreHome, StoreWithHome } from '../../models/storefront.model';
 import { BagService } from '../../services/bag.service';
 import { apiErrorMessage } from '../../services/market-api.service';
 import { MarketAuthService } from '../../services/market-auth.service';
@@ -45,6 +45,7 @@ export class StoreComponent implements OnInit {
   private readonly route = inject( ActivatedRoute );
   private readonly router = inject( Router );
   private readonly seo = inject( SeoService );
+  private readonly document = inject( DOCUMENT );
   readonly bag = inject( BagService );
   readonly auth = inject( MarketAuthService );
   readonly saved = inject( SavedService );
@@ -93,18 +94,20 @@ export class StoreComponent implements OnInit {
 
   async ngOnInit (): Promise<void> {
     const slug = this.slugOverride() || this.route.snapshot.paramMap.get( 'slug' ) || '';
-    try {
-      const { home, ...store } = await this.api.home( slug );
-      this.store.set( store );
-      this.homeData.set( home );
-      this.seo.set( { title: `${ store.name } | 16Ahead Store`, description: store.heroLine || `Shop ${ store.name } on 16Ahead Store.`, path: `/${ store.slug }` } );
-      this.seo.setJsonLd( 'store-jsonld', {
-        '@context': 'https://schema.org', '@type': 'Store', name: store.name, url: `https://${ this.address() }`,
-        hasOfferCatalog: { '@type': 'OfferCatalog', url: `https://market.taliferro.tech/feeds/${ store.slug }.json` },
-      } );
-    } catch {
-      this.notFound.set( true );
-      return;
+    // The store's page arrives with its data in it (backend storePage.routes),
+    // so it renders at once; the live store then loads behind it and replaces
+    // it if anything changed. Without that data, wait for the API as before.
+    const embedded = this.takeEmbeddedStore( slug );
+    if ( embedded ) {
+      this.showStore( embedded );
+      void this.api.home( slug ).then( ( live ) => this.showStore( live ), () => undefined );
+    } else {
+      try {
+        this.showStore( await this.api.home( slug ) );
+      } catch {
+        this.notFound.set( true );
+        return;
+      }
     }
     void this.saved.load();
     const params = this.route.snapshot.queryParamMap;
@@ -117,6 +120,31 @@ export class StoreComponent implements OnInit {
       const product = await this.api.product( slug, productId ).catch( () => null );
       if ( product ) await this.ask( product.title );
     }
+  }
+
+  /** The store data embedded in the page for this slug, once (later visits in the app use the API). */
+  private takeEmbeddedStore ( slug: string ): StoreWithHome | null {
+    const el = this.document.getElementById( 'tm-store-data' );
+    if ( !el ) return null;
+    el.remove();
+    try {
+      const data = JSON.parse( el.textContent || '' ) as StoreWithHome;
+      return data && data.slug === slug && data.home ? data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private showStore ( { home, ...store }: StoreWithHome ): void {
+    // The live copy usually matches the embedded one: skip the re-render.
+    if ( JSON.stringify( store ) === JSON.stringify( this.store() ) && JSON.stringify( home ) === JSON.stringify( this.homeData() ) ) return;
+    this.store.set( store );
+    this.homeData.set( home );
+    this.seo.set( { title: `${ store.name } | 16Ahead Store`, description: store.heroLine || `Shop ${ store.name } on 16Ahead Store.`, path: `/${ store.slug }` } );
+    this.seo.setJsonLd( 'store-jsonld', {
+      '@context': 'https://schema.org', '@type': 'Store', name: store.name, url: `https://${ this.address() }`,
+      hasOfferCatalog: { '@type': 'OfferCatalog', url: `https://market.taliferro.tech/feeds/${ store.slug }.json` },
+    } );
   }
 
   tint ( i: number ): string {

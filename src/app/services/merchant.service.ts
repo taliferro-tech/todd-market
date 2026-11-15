@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 
-import { BuildJob, CustomDomain, HomeOptions, MerchantStore, SheetPreview, Palette, ReviewData, StoreBrand, StoreSettings, Voice } from '../models/merchant.model';
+import { selectedStoreId, setSelectedStoreId } from '../core/store-selection';
+import { BuildJob, CustomDomain, ManagedStore, HomeOptions, MerchantStore, SheetPreview, Palette, ReviewData, StoreBrand, StoreSettings, Voice } from '../models/merchant.model';
 
 export interface LedgerRow {
   id: string; direction: 'sent' | 'received'; store: string; item: string; date: number; saleCents: number; commissionCents: number;
@@ -81,8 +82,42 @@ export class MerchantService {
   private readonly api = inject( MarketApiService );
   /** undefined until loaded; null when the merchant has no store yet. */
   readonly store = signal<MerchantStore | null | undefined>( undefined );
+  /** Every store this user may manage; more than one shows the store switcher. */
+  readonly stores = signal<ManagedStore[]>( [] );
+  private storesLoaded: Promise<void> | null = null;
+
+  /**
+   * Loads the store list once, and drops a remembered choice this user
+   * can't manage (another account signed in on this browser).
+   */
+  loadStores (): Promise<void> {
+    this.storesLoaded ??= this.api.get<{ stores: ManagedStore[] }>( '/merchant/stores' )
+      .then( ( { stores } ) => {
+        this.stores.set( stores );
+        const chosen = selectedStoreId();
+        if ( chosen && !stores.some( ( s ) => s.id === chosen ) ) setSelectedStoreId( '' );
+      } )
+      .catch( () => {
+        this.storesLoaded = null;
+      } );
+    return this.storesLoaded;
+  }
+
+  /** Switches every merchant page to another store (reloads the app on it). */
+  switchStore ( id: string ): void {
+    setSelectedStoreId( id );
+    window.location.assign( '/app/products' );
+  }
+
+  /** On sign-out: forget the store list and the choice. */
+  resetStores (): void {
+    setSelectedStoreId( '' );
+    this.stores.set( [] );
+    this.storesLoaded = null;
+  }
 
   async load (): Promise<MerchantStore | null> {
+    await this.loadStores();
     const { store } = await this.api.get<{ store: MerchantStore | null; build?: BuildJob | null }>( '/merchant/store' );
     this.store.set( store );
     return store;

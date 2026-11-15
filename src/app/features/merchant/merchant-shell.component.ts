@@ -22,6 +22,15 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
     <div class="page">
       <header class="head">
         <a class="title" routerLink="/app">16Ahead Store <span>for merchants</span></a>
+        @if (switcher(); as sw) {
+          <label class="switch">
+            <span class="sr-only">Store</span>
+            <select (change)="onSwitch($event)" aria-label="Choose a store to manage">
+              @for (s of sw.options; track s.id) { <option [value]="s.id" [selected]="s.id === sw.currentId">{{ s.label }}</option> }
+            </select>
+            @if (sw.currentSeed) { <span class="seed">Seed store</span> }
+          </label>
+        }
         @if (onboardingStep(); as current) {
           <ol class="steps" aria-label="Setup steps">
             @for (s of steps; track s.key; let i = $index) {
@@ -55,6 +64,10 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
     .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--surface2); }
     .done .dot { background: var(--cyan); }
     .current .dot { background: var(--blue); }
+    .switch { display: flex; align-items: center; gap: 8px; }
+    .switch select { font: inherit; font-size: 14px; font-weight: 600; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line, var(--surface2)); background: var(--surface); color: var(--text); max-width: 240px; }
+    .seed { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--surface2); color: var(--muted); white-space: nowrap; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .nav { display: flex; gap: 4px; flex-wrap: wrap; }
     .nav a { padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--text); }
     .nav a:hover, .nav a.on { background: var(--surface); color: var(--text); }
@@ -74,6 +87,17 @@ export class MerchantShellComponent {
   } );
   readonly stepIndex = computed( () => this.steps.findIndex( ( s ) => s.key === this.onboardingStep() ) );
   readonly section = computed( () => this.url().split( /[?#]/ )[0].split( '/' )[2] || '' );
+  /** The store switcher, for users who manage more than one store (seed stores). */
+  readonly switcher = computed( () => {
+    const stores = this.merchant.stores();
+    if ( stores.length < 2 ) return null;
+    const current = this.merchant.store();
+    return {
+      currentId: current?.id ?? '',
+      currentSeed: !!current?.seed,
+      options: stores.map( ( s ) => ( { id: s.id, label: s.status === 'live' ? s.name : `${ s.name } (${ s.status })` } ) ),
+    };
+  } );
 
   constructor () {
     // The header's store links need the store, whichever page opened first.
@@ -82,7 +106,13 @@ export class MerchantShellComponent {
       .subscribe( ( e ) => this.url.set( e.urlAfterRedirects ) );
   }
 
+  onSwitch ( event: Event ): void {
+    const id = ( event.target as HTMLSelectElement ).value;
+    if ( id && id !== this.merchant.store()?.id ) this.merchant.switchStore( id );
+  }
+
   async signOut (): Promise<void> {
+    this.merchant.resetStores();
     await this.auth.signOut();
     this.merchant.store.set( undefined );
     await this.router.navigateByUrl( '/' );

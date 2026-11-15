@@ -15,6 +15,9 @@ export interface TunedBrand {
 
 export interface StoreBrand { palette: Palette; tuned: TunedBrand; logoUrl: string | null }
 
+/** A store the signed-in user may manage (the store switcher). */
+export interface ManagedStore { id: string; name: string; slug: string; status: string; seed: boolean }
+
 export interface MerchantStore {
   id: string;
   name: string;
@@ -39,6 +42,9 @@ export interface MerchantStore {
   };
   directoryCategory: string;
   customDomain: CustomDomain | null;
+  /** Run by the master tenant until a real store in its category joins. */
+  seed?: boolean;
+  isSample?: boolean;
   /** Set when the store began as a claimed listing from the Find crawl. */
   claimedListing: { domain: string; interestCount: number } | null;
   /** Return labels: Shippo switched on for TODD (available), and connected by this store. */

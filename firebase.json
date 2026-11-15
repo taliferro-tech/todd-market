@@ -14,6 +14,20 @@
       { "source": "/api/**", "function": { "functionId": "marketApi", "region": "us-central1" } },
       { "source": "/feeds/**", "function": { "functionId": "marketApi", "region": "us-central1" } },
       { "source": "/p/**", "function": { "functionId": "marketApi", "region": "us-central1" } },
+      { "source": "/stores", "destination": "/index.csr.html" },
+      { "source": "/search", "destination": "/index.csr.html" },
+      { "source": "/sell", "destination": "/index.csr.html" },
+      { "source": "/about", "destination": "/index.csr.html" },
+      { "source": "/help", "destination": "/index.csr.html" },
+      { "source": "/pricing", "destination": "/index.csr.html" },
+      { "source": "/ios", "destination": "/index.csr.html" },
+      { "source": "/shippo-oauth-redirect", "destination": "/index.csr.html" },
+      { "source": "/sign-in", "destination": "/index.csr.html" },
+      { "source": "/account", "destination": "/index.csr.html" },
+      { "source": "/app", "destination": "/index.csr.html" },
+      { "source": "/app/**", "destination": "/index.csr.html" },
+      { "regex": "^/[a-z0-9-]{1,60}$", "function": { "functionId": "marketApi", "region": "us-central1" } },
+      { "regex": "^/[a-z0-9-]{1,60}/products/[A-Za-z0-9_-]{1,128}$", "function": { "functionId": "marketApi", "region": "us-central1" } },
       { "source": "**", "destination": "/index.csr.html" }
     ]
   }

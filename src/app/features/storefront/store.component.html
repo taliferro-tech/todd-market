@@ -305,5 +305,16 @@
 } @else if (notFound()) {
   <main class="missing"><h1>That store isn't here.</h1><p>It may have closed, or the link is old.</p><a class="tm-btn tm-btn--primary" routerLink="/">Back to 16Ahead Store</a></main>
 } @else {
-  <p class="loading">Opening the store…</p>
+  <div class="shop" aria-busy="true">
+    <p class="tm-sr-only" role="status">Opening the store…</p>
+    <div class="home sk" aria-hidden="true">
+      <div class="hero"><span class="sk-box mark-lg"></span><span class="sk-line sk-name"></span><span class="sk-line sk-lead"></span><span class="search sk-box"></span></div>
+      <div class="block"><span class="sk-line sk-h2"></span>
+        <div class="cats">@for (n of [1, 2, 3, 4, 5, 6]; track n) { <div class="cat"><span class="cat__img sk-box"></span><span class="sk-line sk-w60"></span></div> }</div>
+      </div>
+      <div class="block"><span class="sk-line sk-h2"></span>
+        <div class="grid">@for (n of [1, 2, 3, 4]; track n) { <div class="prod"><span class="prod__img sk-box"></span><span class="sk-line sk-w75"></span><span class="sk-line sk-w40"></span></div> }</div>
+      </div>
+    </div>
+  </div>
 }

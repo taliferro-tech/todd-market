@@ -1,6 +1,16 @@
 .shop { width: 100%; max-width: 1240px; margin: 0 auto; padding: 30px 40px 44px; display: flex; flex-direction: column; gap: 22px; flex: 1 0 auto; }
 .sample { padding: 10px 16px; border-radius: 999px; background: var(--t-yellow); color: var(--t-yellow-fg); font-size: 13px; font-weight: 600; align-self: center; }
 .loading, .missing { padding: 64px 40px; color: var(--muted); }
+/* Placeholder while the store loads (no embedded data): the home's shapes, pulsing. */
+.sk-box, .sk-line { display: block; background: var(--surface); animation: skPulse 1.4s ease-in-out infinite; }
+.sk .search { box-shadow: none; }
+.sk-line { height: 14px; border-radius: 7px; margin-top: 6px; }
+.sk-name { width: min(380px, 80%); height: 52px; border-radius: 14px; }
+.sk-lead { width: min(440px, 90%); }
+.sk-h2 { width: 200px; height: 24px; }
+.sk-w40 { width: 40%; } .sk-w60 { width: 60%; } .sk-w75 { width: 75%; }
+@keyframes skPulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .sk-box, .sk-line { animation: none; } }
 .missing { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; color: var(--text); }
 .missing h1 { font-size: 46px; letter-spacing: -0.03em; }
 

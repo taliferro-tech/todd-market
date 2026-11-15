@@ -3,6 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { from, switchMap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { selectedStoreId } from '../store-selection';
 
 /**
  * Proves who is calling the TODD backend: adds the signed-in person's
@@ -35,7 +36,12 @@ export const idTokenInterceptor: HttpInterceptorFn = ( req, next ) => {
   }
 
   return from( currentIdToken() ).pipe(
-    switchMap( ( token ) => next( token ? req.clone( { setHeaders: { Authorization: `Bearer ${token}` } } ) : req ) ),
+    switchMap( ( token ) => {
+      if ( !token ) return next( req );
+      // The store switcher's choice (seed stores): only merchant calls read it.
+      const storeId = req.url.includes( '/api/merchant/stores' ) ? '' : selectedStoreId();
+      return next( req.clone( { setHeaders: { Authorization: `Bearer ${token}`, ...( storeId ? { 'X-Market-Store': storeId } : {} ) } } ) );
+    } ),
   );
 };
 
