@@ -42,6 +42,15 @@ export class MarketAuthService {
   /** undefined while Firebase restores the session; null when signed out. */
   readonly user = signal<User | null | undefined>( undefined );
   readonly isSignedIn = computed( () => !!this.user() );
+  /**
+   * Has a 16Ahead workspace or a store to manage (from /account/profile);
+   * null until known or signed out. Everyone else is only a shopper.
+   */
+  readonly workspace = signal<boolean | null>( null );
+  /** Signed in as a shopper only: the menu shows a shop account, not the 16Ahead apps. */
+  readonly isShopper = computed( () => this.isSignedIn() && this.workspace() === false );
+  /** Menu pages to leave out: "My store" for a shopper, "Sell on 16Ahead" for a workspace user. */
+  readonly menuHiddenRoutes = computed( () => this.isShopper() ? ['/app'] : this.workspace() ? ['/sell'] : [] );
   /** Settles once Firebase has restored the session from the last visit. */
   private readonly restored: Promise<unknown>;
 
@@ -71,7 +80,20 @@ export class MarketAuthService {
     }
     const auth = getAuth();
     this.restored = auth.authStateReady();
-    onAuthStateChanged( auth, ( user ) => this.user.set( user ) );
+    onAuthStateChanged( auth, ( user ) => {
+      this.user.set( user );
+      this.loadWorkspace( user );
+    } );
+  }
+
+  private loadWorkspace ( user: User | null ): void {
+    this.workspace.set( null );
+    if ( !user ) return;
+    const uid = user.uid;
+    // Anything but an explicit false (an older backend, an error) keeps the full menu.
+    this.api.get<{ workspace?: boolean }>( '/account/profile' )
+      .then( ( profile ) => { if ( this.user()?.uid === uid ) this.workspace.set( profile.workspace !== false ); } )
+      .catch( () => { if ( this.user()?.uid === uid ) this.workspace.set( true ); } );
   }
 
   private currentUser (): User | null {

@@ -48,7 +48,7 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
             <a [routerLink]="['/', merchant.store()!.slug]">View store</a>
           </nav>
         }
-        <app-platform-menu [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''"
+        <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''"
           [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" />
       </header>
       <router-outlet />

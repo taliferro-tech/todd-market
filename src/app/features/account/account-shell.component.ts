@@ -14,7 +14,7 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
   template: `
     <div class="page">
       <header class="head"><a routerLink="/" class="title">16Ahead <span>Store</span></a>
-        <app-platform-menu [isLoggedIn]="true" [userName]="auth.user()?.displayName || ''" [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" /></header>
+        <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="true" [userName]="auth.user()?.displayName || ''" [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" /></header>
       <div class="layout">
         <aside class="side">
           <div class="who"><span class="avatar">{{ initials() }}</span><div><strong>{{ auth.user()?.displayName || 'Your account' }}</strong><span>{{ auth.user()?.email }}</span></div></div>

@@ -24,7 +24,7 @@
         </button>
       </header>
 
-      <div class="um-body" [class.um-body--no-app]="!hasAppColumn" [class.um-body--no-account]="!hasAccountCard">
+      <div class="um-body" [class.um-body--no-app]="!hasAppColumn" [class.um-body--no-account]="!hasAccountCard" [class.um-body--no-products]="isShopper">
         <!-- 1 · This app -->
         <nav class="um-app" *ngIf="hasAppColumn" [attr.aria-label]="config.name">
           <span class="um-eyebrow">{{ appTitle }}</span>
@@ -47,7 +47,7 @@
         </nav>
 
         <!-- 2 · Apps (all sixteen; the current one is marked) -->
-        <section class="um-products" aria-label="Apps" *ngIf="visibleProducts.length || !query">
+        <section class="um-products" aria-label="Apps" *ngIf="!isShopper && (visibleProducts.length || !query)">
           <div class="um-section-head">
             <span class="um-eyebrow">Apps</span>
             <small>Opens in this tab</small>
@@ -67,7 +67,7 @@
           <div class="um-card">
             <ng-container *ngIf="isLoggedIn; else signedOut">
               <ng-container *ngIf="userName || userEmail">
-                <a *ngIf="config.profileRoute; else toddProfile" class="um-person" [routerLink]="config.profileRoute" title="Your profile" (click)="close()">
+                <a *ngIf="profileRoute; else toddProfile" class="um-person" [routerLink]="profileRoute" title="Your profile" (click)="close()">
                   <ng-container *ngTemplateOutlet="person"></ng-container>
                 </a>
                 <ng-template #toddProfile>

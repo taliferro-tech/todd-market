@@ -32,13 +32,15 @@ export type PublicNavKey = 'how' | 'shop' | 'pricing' | 'ios' | 'help' | 'about'
         <a routerLink="/help" [class.on]="active() === 'help'">Help</a>
         <a routerLink="/about" [class.on]="active() === 'about'">About</a>
       </nav>
-      @if (auth.isSignedIn()) {
+      @if (auth.isShopper()) {
+        <a class="tm-btn signin" routerLink="/account">My orders</a>
+      } @else if (auth.isSignedIn()) {
         <a class="tm-btn signin" routerLink="/app">My store</a>
       } @else {
         <a class="tm-btn signin" routerLink="/sign-in" [queryParams]="{ as: 'merchant' }">Sign in</a>
       }
       <a class="tm-btn tm-btn--primary start" routerLink="/app/onboarding">Start selling</a>
-      <app-platform-menu [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''"
+      <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''"
         [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" />
     </header>`,
   styles: [`

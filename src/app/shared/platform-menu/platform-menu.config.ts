@@ -14,6 +14,7 @@ export const PLATFORM_MENU_CONFIG: MenuAppConfig = {
     { label: 'Help', icon: 'help', route: '/help' },
     { label: 'About', icon: 'info', route: '/about' },
     { label: 'iOS App', icon: 'phone', route: '/ios', keywords: 'iphone app store' },
+    { label: 'Sell on 16Ahead', icon: 'building', route: '/sell', keywords: 'open a store merchant seller' },
   ],
   signInRoute: '/sign-in',
 };

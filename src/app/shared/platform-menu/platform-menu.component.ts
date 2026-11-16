@@ -55,6 +55,14 @@ export class PlatformMenuComponent {
   @Input() userEmail = '';
   /** Hide the Menu pill when the page shows its own trigger and calls open(). */
   @Input() showTrigger = true;
+  /**
+   * Signed in without a 16Ahead workspace (a Store shopper): no app tiles and
+   * no workspace account links; the person card opens shopperProfileRoute.
+   */
+  @Input() shopper = false;
+  @Input() shopperProfileRoute = '';
+  /** This app's pages to leave out of the menu for this person (e.g. '/app' for a shopper). */
+  @Input() hiddenRoutes: string[] = [];
   @Output() readonly signOut = new EventEmitter<void>();
   @Output() readonly signIn = new EventEmitter<void>();
 
@@ -100,15 +108,18 @@ export class PlatformMenuComponent {
   get section (): MenuSection | undefined { return menuSectionFor( this.config.sections, this.router.url ); }
   get appTitle (): string { return this.section?.title || this.config.name; }
   get appItems (): MenuLink[] {
-    return ( this.section?.items || this.config.items ).filter( ( item ) => menuMatches( this.query, item.label, item.keywords ) );
+    return ( this.section?.items || this.config.items ).filter( ( item ) => this.shown( item ) && menuMatches( this.query, item.label, item.keywords ) );
   }
   get adminItems (): MenuLink[] {
     if ( !this.isLoggedIn ) return [];
     return menuAdminItems( this.config.adminItems, this.isAdmin, this.isMaster ).filter( ( item ) => menuMatches( this.query, item.label, item.keywords ) );
   }
-  get secondaryItems (): MenuLink[] { return ( this.config.secondaryItems || [] ).filter( ( item ) => menuMatches( this.query, item.label, item.keywords ) ); }
-  get visibleProducts (): MenuProduct[] { return this.products.filter( ( product ) => menuMatches( this.query, product.label ) ); }
-  get visibleAccount (): MenuLink[] { return this.accountLinks.filter( ( item ) => menuMatches( this.query, item.label, item.keywords ) ); }
+  get secondaryItems (): MenuLink[] { return ( this.config.secondaryItems || [] ).filter( ( item ) => this.shown( item ) && menuMatches( this.query, item.label, item.keywords ) ); }
+  get visibleProducts (): MenuProduct[] { return this.isShopper ? [] : this.products.filter( ( product ) => menuMatches( this.query, product.label ) ); }
+  get visibleAccount (): MenuLink[] { return this.isShopper ? [] : this.accountLinks.filter( ( item ) => menuMatches( this.query, item.label, item.keywords ) ); }
+  get isShopper (): boolean { return this.isLoggedIn && this.shopper; }
+  get profileRoute (): string | undefined { return this.isShopper && this.shopperProfileRoute ? this.shopperProfileRoute : this.config.profileRoute; }
+  private shown ( item: MenuLink ): boolean { return !item.route || !this.hiddenRoutes.includes( item.route ); }
   /** Apps without accounts (config.noSignIn) show no Account card while signed out. */
   get hasAccountCard (): boolean {
     return this.isLoggedIn || !this.config.noSignIn;
