@@ -31,7 +31,7 @@ export class SettingsComponent implements OnInit {
   private readonly router = inject( Router );
 
   readonly tabs: { key: Tab; label: string }[] = [
-    { key: 'store', label: 'Store' }, { key: 'home', label: 'Home page' }, { key: 'products', label: 'Products' }, { key: 'returns', label: 'Returns' }, { key: 'tax', label: 'Tax' }, { key: 'shipping', label: 'Shipping' },
+    { key: 'store', label: 'Store' }, { key: 'home', label: 'Home page' }, { key: 'products', label: 'Spec sheets' }, { key: 'returns', label: 'Returns' }, { key: 'tax', label: 'Tax' }, { key: 'shipping', label: 'Shipping' },
   ];
   readonly windows = [{ days: 14, label: '14 days' }, { days: 30, label: '30 days' }, { days: 60, label: '60 days' }, { days: 0, label: 'No returns' }];
   readonly states = US_STATES;
