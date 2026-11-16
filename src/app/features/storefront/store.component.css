@@ -26,6 +26,10 @@
 .home { display: flex; flex-direction: column; gap: 48px; }
 .hero { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; padding-top: 8px; }
 .mark-lg { width: 64px; height: 64px; border-radius: 20px; font-size: 30px; }
+/* A real logo keeps its own shape in the hero: a wide wordmark squeezed
+   into the 64px square came out a sliver. The square stays for initials. */
+.hero .mark-lg:has(> img) { display: block; width: auto; height: auto; border-radius: 0; background: transparent; }
+.hero .mark-lg > img { display: block; width: auto; height: 84px; max-width: min(320px, 80vw); object-fit: contain; background: transparent; }
 .name { font-size: 60px; font-weight: 700; letter-spacing: -0.045em; line-height: 1; }
 .lead { font-size: 18px; color: var(--muted); max-width: 560px; }
 .search { width: 100%; max-width: 760px; height: 62px; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; background: var(--surface); }
@@ -49,6 +53,11 @@
 .cat { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .cat__img { width: 100%; height: 150px; margin-bottom: 8px; border-radius: 20px; display: grid; place-items: center; overflow: hidden; }
 .cat__img img, .prod__img img { width: 100%; height: 100%; object-fit: cover; }
+/* A photo is pinned to the tile's edges. As a grid item its 100% height
+   didn't resolve, so it kept its own (square) height, spilled past the
+   bottom and let the tint show. */
+.cat__img, .prod__img { position: relative; }
+.cat__img > img, .prod__img > img { position: absolute; inset: 0; }
 .cat strong { font-size: 16px; font-weight: 700; }
 .cat__count { font-size: 13px; color: var(--muted); }
 .cat:hover .cat__img, .prod__open:hover .prod__img { filter: brightness(.97); }

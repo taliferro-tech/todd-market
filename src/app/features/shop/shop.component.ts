@@ -85,8 +85,16 @@ export class ShopComponent implements OnInit {
     const params = this.route.snapshot.queryParamMap;
     this.view.set( params.get( 'view' ) === 'stores' || this.route.snapshot.data['view'] === 'stores' ? 'stores' : 'search' );
     void this.loadStores();
+    // ?want=<domain>: a Find guide's "Want to buy from them here?" opens the same dialog.
+    const want = params.get( 'want' );
+    if ( want ) void this.openWant( want );
     const q = params.get( 'q' );
     if ( q ) await this.ask( q );
+  }
+
+  private async openWant ( domain: string ): Promise<void> {
+    const listing = await this.shop.listing( domain ).catch( () => null );
+    if ( listing && listing.status === 'unclaimed' ) this.interestFor.set( { domain: listing.domain, name: listing.name, url: listing.url } );
   }
 
   setView ( view: View ): void {
