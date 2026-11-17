@@ -8,7 +8,9 @@ import { environment } from '../../environments/environment';
 type Fbq = ( ( ...args: unknown[] ) => void ) & { callMethod?: ( ...args: unknown[] ) => void; queue: unknown[]; loaded: boolean; version: string; push: unknown };
 
 /** Pages that aren't shopping (seller tools, a shopper's account): no Pixel there. */
-const PRIVATE = /^\/(app|account|sign-in|shippo-oauth-redirect|claim)(\/|$|\?)/;
+const PRIVATE = /^\/(app|account|sign-in|shippo-oauth-redirect|claim|help\/privacy-choices)(\/|$|\?)/;
+/** "Your privacy choices": the visitor turned ad measurement off in this browser. */
+const OPT_OUT_KEY = 'tm-ads-opt-out';
 
 /**
  * Meta Pixel for 16Ahead's own Facebook ads: page views, product views, add
@@ -16,17 +18,21 @@ const PRIVATE = /^\/(app|account|sign-in|shippo-oauth-redirect|claim)(\/|$|\?)/;
  * sends each purchase too (todd-backend metaEvents.service.js) with the order
  * ID as the event ID, so Meta counts it once.
  *
- * Only in production builds (environment.metaPixelId), only in the browser.
+ * Only in production builds (environment.metaPixelId), only in the browser,
+ * and never for a visitor who opted out on /help/privacy-choices or whose
+ * browser sends Global Privacy Control. The opt-out also reaches the server
+ * with checkout, so it skips its copy of the purchase.
  */
 @Injectable( { providedIn: 'root' } )
 export class MetaPixelService {
   private readonly document = inject( DOCUMENT );
-  private readonly enabled = isPlatformBrowser( inject( PLATFORM_ID ) ) && !!environment.metaPixelId;
+  private readonly browser = isPlatformBrowser( inject( PLATFORM_ID ) );
+  private readonly configured = this.browser && !!environment.metaPixelId;
   private loaded = false;
   private lastPath = '';
 
   constructor () {
-    if ( !this.enabled ) return;
+    if ( !this.configured ) return;
     inject( Router ).events.pipe( filter( ( e ): e is NavigationEnd => e instanceof NavigationEnd ) ).subscribe( ( e ) => {
       const path = e.urlAfterRedirects.split( '#' )[0];
       if ( PRIVATE.test( path ) || path === this.lastPath ) return;
@@ -61,19 +67,50 @@ export class MetaPixelService {
     }, orderId );
   }
 
-  /** Meta's cookies, sent with checkout so the server's purchase matches this browser. */
-  cookies (): { fbp: string | null; fbc: string | null; sourceUrl: string | null } {
-    if ( !this.enabled ) return { fbp: null, fbc: null, sourceUrl: null };
+  /** The browser's Global Privacy Control signal: treated as an opt-out. */
+  gpc (): boolean {
+    return this.browser && ( this.document.defaultView?.navigator as { globalPrivacyControl?: boolean } | undefined )?.globalPrivacyControl === true;
+  }
+
+  /** Opted out here, or by Global Privacy Control. */
+  optedOut (): boolean {
+    if ( !this.browser ) return false;
+    if ( this.gpc() ) return true;
+    try { return this.document.defaultView?.localStorage.getItem( OPT_OUT_KEY ) === '1'; } catch { return false; }
+  }
+
+  /** "Your privacy choices": turns ad measurement off (or back on) in this browser. */
+  setOptOut ( off: boolean ): void {
+    if ( !this.browser ) return;
+    try {
+      if ( off ) this.document.defaultView?.localStorage.setItem( OPT_OUT_KEY, '1' );
+      else this.document.defaultView?.localStorage.removeItem( OPT_OUT_KEY );
+    } catch { /* storage blocked: the choice lasts this visit only */ }
+    if ( off ) {
+      const w = this.document.defaultView as unknown as { fbq?: Fbq };
+      try { w.fbq?.( 'consent', 'revoke' ); } catch { /* not loaded */ }
+      // Meta's first-party cookies go too.
+      for ( const name of ['_fbp', '_fbc'] ) {
+        this.document.cookie = `${ name }=; Max-Age=0; path=/`;
+        this.document.cookie = `${ name }=; Max-Age=0; path=/; domain=.${ this.document.location.hostname.replace( /^www\./, '' ) }`;
+      }
+    }
+  }
+
+  /** Meta's cookies, sent with checkout so the server's purchase matches this browser, or the opt-out. */
+  cookies (): { fbp: string | null; fbc: string | null; sourceUrl: string | null; optOut: boolean } {
+    if ( this.optedOut() ) return { fbp: null, fbc: null, sourceUrl: null, optOut: true };
+    if ( !this.configured ) return { fbp: null, fbc: null, sourceUrl: null, optOut: false };
     const read = ( name: string ) => ( this.document.cookie.match( new RegExp( `(?:^|; )${ name }=([^;]*)` ) ) || [] )[1] || null;
     let fbc = read( '_fbc' );
     // Arrived from an ad on this page but the cookie isn't set yet: build it from fbclid, as Meta does.
     const fbclid = new URLSearchParams( this.document.location.search ).get( 'fbclid' );
     if ( !fbc && fbclid ) fbc = `fb.1.${ Date.now() }.${ fbclid }`;
-    return { fbp: read( '_fbp' ), fbc, sourceUrl: this.document.location.href.split( '#' )[0] };
+    return { fbp: read( '_fbp' ), fbc, sourceUrl: this.document.location.href.split( '#' )[0], optOut: false };
   }
 
   private track ( event: string, data?: Record<string, unknown>, eventId?: string ): void {
-    if ( !this.enabled ) return;
+    if ( !this.configured || this.optedOut() ) return;
     try {
       const fbq = this.load();
       if ( eventId ) fbq( 'track', event, data || {}, { eventID: eventId } );

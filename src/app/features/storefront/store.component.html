@@ -97,6 +97,7 @@
               @if (s.freeShippingOverCents) { <p>Free standard shipping over {{ s.freeShippingOverCents | money }}.</p> }
             </details>
             @if (h.contactEmail) { <a [href]="'mailto:' + h.contactEmail">Contact</a> }
+            <a routerLink="/help/privacy-choices">Your privacy choices</a>
           </span>
           <span class="foot__network">Part of <a [href]="platformUrl"><strong>16Ahead Store</strong></a>, independent stores that send each other customers</span>
         </footer>

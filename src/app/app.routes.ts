@@ -10,6 +10,7 @@ export const routes: Routes = [
   { path: 'search', loadComponent: () => import( './features/shop/shop.component' ).then( ( m ) => m.ShopComponent ) },
   { path: 'sell', loadComponent: () => import( './features/landing/landing.component' ).then( ( m ) => m.LandingComponent ) },
   { path: 'about', loadComponent: () => import( './features/about/about.component' ).then( ( m ) => m.AboutComponent ) },
+  { path: 'help/privacy-choices', loadComponent: () => import( './features/help/privacy-choices.component' ).then( ( m ) => m.PrivacyChoicesComponent ) },
   { path: 'help', loadComponent: () => import( './features/help/help.component' ).then( ( m ) => m.HelpComponent ) },
   { path: 'pricing', loadComponent: () => import( './features/pricing/pricing.component' ).then( ( m ) => m.PricingComponent ) },
   { path: 'ios', loadComponent: () => import( './features/ios/ios.component' ).then( ( m ) => m.IosComponent ) },

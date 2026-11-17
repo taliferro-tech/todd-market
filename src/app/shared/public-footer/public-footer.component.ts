@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
   template: `
     <footer class="foot">
       <a routerLink="/">← Back to 16Ahead Store</a>
+      <a routerLink="/help/privacy-choices">Your privacy choices</a>
       @if (aboutLink()) {
         <a routerLink="/about">About 16Ahead Store →</a>
       } @else {

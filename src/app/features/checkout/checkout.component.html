@@ -85,6 +85,7 @@
           {{ paying() ? 'Processing…' : 'Pay ' + ((quote()?.totalCents ?? subtotal()) | money: true) }}
         </button>
         <p class="note">One checkout. Each store charges, ships and handles returns for its own items.@for (n of referredStores(); track n) { {{ n }} sets its own prices.}</p>
+        <p class="note"><a routerLink="/help/privacy-choices">Your privacy choices</a></p>
       </aside>
     </div>
   }
