@@ -9,6 +9,8 @@ export const environment = {
   /** Taliferro Tech platform account (acct_1Lcw5wDNMbtry5hW). Dev builds keep a placeholder: they run against the fake Stripe. */
   /** Dev only (environment.devauth.ts): sign in as this uid against market/dev/server.js. Always empty in real builds. */
   devAuthUid: '',
+  /** Meta Pixel (dataset "16ahead Store", TaliferroTech). Empty: no Pixel (dev and test builds). */
+  metaPixelId: '2030008421005835',
   stripePublishableKey: 'pk_live_51Lcw5wDNMbtry5hWTRFBeBWYfW1XMz701tXdYOoUrgwm42YnQs0x2cSv8VFTMm33IIpiS787o6knKAihfZXO4xQl00sVyXvbUz',
   firebaseConfig: {
     apiKey: 'AIzaSyApZSnHn8Pd2fI_0oSod0Sv9O_JsOoniBc',

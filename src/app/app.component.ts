@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { initTheme } from '@taliferro/ui/platform/theme';
 
+import { MetaPixelService } from './services/meta-pixel.service';
 import { SoundService } from './services/sound.service';
 
 @Component( {
@@ -18,5 +19,7 @@ export class AppComponent {
     initTheme();
     // The universal menu's click sounds (taliferro-ui/sound).
     inject( SoundService );
+    // Facebook ad measurement (production builds only).
+    inject( MetaPixelService );
   }
 }

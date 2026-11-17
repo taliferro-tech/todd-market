@@ -10,6 +10,7 @@ import { BagService } from '../../services/bag.service';
 import { Address, CheckoutService, Quote } from '../../services/checkout.service';
 import { apiErrorMessage } from '../../services/market-api.service';
 import { MarketAuthService } from '../../services/market-auth.service';
+import { MetaPixelService } from '../../services/meta-pixel.service';
 import { SeoService } from '../../services/seo.service';
 import { StorefrontService } from '../../services/storefront.service';
 import { brandStyle } from '../../shared/brand/brand-tuning';
@@ -37,6 +38,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   private readonly storefront = inject( StorefrontService );
   private readonly checkout = inject( CheckoutService );
   private readonly auth = inject( MarketAuthService );
+  private readonly pixel = inject( MetaPixelService );
   private readonly isBrowser = isPlatformBrowser( inject( PLATFORM_ID ) );
   readonly bag = inject( BagService );
   private readonly paymentHost = viewChild<ElementRef<HTMLElement>>( 'payment' );
@@ -79,6 +81,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   async ngOnInit (): Promise<void> {
     const slug = this.route.snapshot.paramMap.get( 'slug' ) || '';
     this.store.set( await this.storefront.store( slug ).catch( () => null ) );
+    if ( this.bag.count() ) this.pixel.initiateCheckout( this.bag.items() );
     const user = await this.auth.ready;
     if ( user?.email ) {
       this.email.set( user.email );
@@ -157,6 +160,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         result = await this.checkout.finalize( quote.orderId );
       }
       if ( result.status === 'paid' ) {
+        // Same order ID the server sends, so Meta counts this purchase once.
+        this.pixel.purchase( quote.orderId, quote.totalCents, quote.parts.flatMap( ( p ) => p.items ) );
         this.bag.clear();
         await this.router.navigate( ['/order', quote.orderId] );
         return;
@@ -184,7 +189,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if ( !this.ready() || !this.bag.count() ) return;
     this.quoting.set( true );
     this.error.set( '' );
-    const body = { email: this.email().trim(), address: this.address(), lines: CheckoutService.lines( this.bag.items() ), shipping: this.shipping(), emailOptIns: this.emailOptIns() };
+    const body = { email: this.email().trim(), address: this.address(), lines: CheckoutService.lines( this.bag.items() ), shipping: this.shipping(), emailOptIns: this.emailOptIns(), tracking: this.pixel.cookies() };
     try {
       const current = this.quote();
       const next = current ? { ...current, ...( await this.checkout.update( current.orderId, body ) ) } : await this.checkout.start( body );

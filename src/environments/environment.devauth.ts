@@ -9,6 +9,8 @@ export const environment = {
   /** Replace with the live publishable key before launch (Stripe Dashboard → Developers → API keys). */
   /** Dev only (environment.devauth.ts): sign in as this uid against market/dev/server.js. Always empty in real builds. */
   devAuthUid: 'merchant1',
+  /** Meta Pixel (dataset "16ahead Store", TaliferroTech). Empty: no Pixel (dev and test builds). */
+  metaPixelId: '',
   stripePublishableKey: 'pk_test_REPLACE_ME',
   firebaseConfig: {
     apiKey: 'AIzaSyApZSnHn8Pd2fI_0oSod0Sv9O_JsOoniBc',

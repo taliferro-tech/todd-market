@@ -5,7 +5,7 @@ import { MarketApiService } from './market-api.service';
 
 export interface Address { name: string; phone: string; line1: string; city: string; state: string; postal_code: string }
 /** emailOptIns: the stores the shopper ticked "Email me news and offers" for. */
-export interface CheckoutBody { email: string; address: Address; lines: unknown[]; shipping: Record<string, string>; emailOptIns: string[] }
+export interface CheckoutBody { email: string; address: Address; lines: unknown[]; shipping: Record<string, string>; emailOptIns: string[]; tracking?: { fbp: string | null; fbc: string | null; sourceUrl: string | null } }
 export interface ShippingOption { id: string; label: string; detail: string; priceCents: number; minDays: number; maxDays: number }
 export interface QuotePart {
   storeId: string; storeName: string; storeSlug: string; accountId: string;

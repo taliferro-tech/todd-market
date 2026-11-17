@@ -10,6 +10,8 @@ export const environment = {
   /** E2E only (environment.e2e.ts, the Cypress build): sign in as this uid against market/dev/server.js. Always empty in real builds. */
   devAuthUid: 'merchant1',
   /** A stand-in Stripe.js is served by Cypress (cypress/support/fake-stripe.js); never a real key. */
+  /** Meta Pixel (dataset "16ahead Store", TaliferroTech). Empty: no Pixel (dev and test builds). */
+  metaPixelId: '',
   stripePublishableKey: 'pk_test_e2e_fake',
   firebaseConfig: {
     apiKey: 'AIzaSyApZSnHn8Pd2fI_0oSod0Sv9O_JsOoniBc',

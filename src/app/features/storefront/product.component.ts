@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { PublicProduct, PublicStore, Variant } from '../../models/storefront.model';
 import { BagService } from '../../services/bag.service';
+import { MetaPixelService } from '../../services/meta-pixel.service';
 import { SeoService } from '../../services/seo.service';
 import { StorefrontService } from '../../services/storefront.service';
 import { brandStyle } from '../../shared/brand/brand-tuning';
@@ -30,6 +31,7 @@ export class ProductComponent implements OnInit {
   private readonly api = inject( StorefrontService );
   private readonly route = inject( ActivatedRoute );
   private readonly seo = inject( SeoService );
+  private readonly pixel = inject( MetaPixelService );
   readonly bag = inject( BagService );
 
   readonly store = signal<PublicStore | null>( null );
@@ -100,6 +102,7 @@ export class ProductComponent implements OnInit {
       this.store.set( store );
       this.product.set( product );
       this.picked.set( this.initialPicks( product ) );
+      this.pixel.viewContent( product );
       this.seo.set( { title: `${ product.title } | ${ store.name }`, description: product.description.slice( 0, 160 ) || `${ product.title } at ${ store.name } on 16Ahead Store.`, path: `/${ store.slug }/products/${ product.id }` } );
     } catch {
       this.notFound.set( true );

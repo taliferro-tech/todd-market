@@ -2,6 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 
 import { BagItem, PublicProduct } from '../models/storefront.model';
+import { MetaPixelService } from './meta-pixel.service';
 
 const BAG_KEY = 'tm-bag';
 const SESSION_KEY = 'tm-session';
@@ -29,11 +30,14 @@ export class BagService {
     return [...groups.values()];
   } );
 
+  private readonly pixel = inject( MetaPixelService );
+
   /** A random id for this browser, so a referral can be matched to the purchase. */
   readonly sessionId: string = this.session();
 
   add ( product: PublicProduct, options: { variantId?: string | null; referralId?: string | null; referredByStoreId?: string | null } = {} ): void {
     const variant = product.variants.find( ( v ) => v.id === options.variantId ) || product.variants.find( ( v ) => v.available ) || null;
+    this.pixel.addToCart( { productId: product.id, title: product.title, priceCents: variant?.priceCents ?? product.priceCents } );
     const key = `${ product.storeId }:${ product.id }:${ variant?.id || '' }`;
     this.items.update( ( items ) => {
       const existing = items.find( ( i ) => i.key === key );
