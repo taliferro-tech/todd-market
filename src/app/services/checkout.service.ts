@@ -15,7 +15,7 @@ export interface QuotePart {
 }
 export interface Quote { orderId: string; viewToken?: string; clientSecret?: string; parts: QuotePart[]; totalCents: number }
 export type PayResult =
-  | { status: 'paid'; orderId: string }
+  | { status: 'paid'; orderId: string; test?: boolean }
   | { status: 'failed'; error: string }
   | { status: 'processing' }
   | { status: 'needs_action'; actions: { storeId: string; storeName: string; accountId: string; clientSecret: string }[] };

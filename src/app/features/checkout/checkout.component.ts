@@ -161,7 +161,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
       if ( result.status === 'paid' ) {
         // Same order ID the server sends, so Meta counts this purchase once.
-        this.pixel.purchase( quote.orderId, quote.totalCents, quote.parts.flatMap( ( p ) => p.items ) );
+        // Staff test orders (refunded at once) aren't sales.
+        if ( !result.test ) this.pixel.purchase( quote.orderId, quote.totalCents, quote.parts.flatMap( ( p ) => p.items ) );
         this.bag.clear();
         await this.router.navigate( ['/order', quote.orderId] );
         return;
@@ -215,7 +216,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       clientSecret,
       appearance: {
         theme: dark ? 'night' : 'stripe',
-        variables: { borderRadius: '999px', fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', colorPrimary: dark ? '#3d7bff' : '#2f6bff' },
+        // Pill fields and tabs, but a normal radius everywhere else: a global 999px
+        // turns Link's "Save my information" panel into a giant oval.
+        variables: { borderRadius: '16px', fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', colorPrimary: dark ? '#3d7bff' : '#2f6bff' },
+        rules: { '.Input': { borderRadius: '999px' }, '.Tab': { borderRadius: '999px' } },
       },
     } );
     const element = this.elements.create( 'payment', { layout: 'tabs', wallets: { applePay: 'auto', googlePay: 'auto' } } );
