@@ -24,7 +24,7 @@ export interface MerchantOrder {
   /** A TODD staff test order (refunded at once, never sent to a supplier). */
   test?: boolean;
   /** Print-on-demand: the order at Printful. */
-  supplierOrder?: { provider: string; id: number | null; status: string } | null;
+  supplierOrder?: { provider: string; id: number | null; status: string; error?: string } | null;
 }
 export interface MerchantReturn {
   id: string; orderId: string; email: string; items: { title: string; quantity: number }[]; reason: string; note: string;
