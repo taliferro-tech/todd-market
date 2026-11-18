@@ -60,9 +60,10 @@ import { MoneyPipe } from '../../../shared/money.pipe';
           <div class="top">
             <div><strong>{{ o.id }}</strong><span class="muted"> · {{ date(o.paidAt) }} · {{ o.address.name }}</span>
               @if (o.test) { <span class="tm-tag tm-tint-yellow">Test · refunded</span> }
-              @if (o.supplierOrder; as so) { <span class="tm-tag" [class.tm-tint-green]="so.status !== 'failed'" [class.tm-tint-pink]="so.status === 'failed'">{{ so.status === 'failed' ? 'Printful didn’t take it' + (so.error ? ': ' + so.error : '') : 'Sent to Printful' + (so.id ? ' #' + so.id : '') }}</span> }</div>
+              @if (o.supplierOrder; as so) { <span class="tm-tag" [class.tm-tint-green]="so.status !== 'failed'" [class.tm-tint-pink]="so.status === 'failed'">{{ so.status === 'failed' ? 'Printful didn’t take it' : 'Sent to Printful' + (so.id ? ' #' + so.id : '') }}</span> }</div>
             <strong>{{ o.totalCents | money: true }}</strong>
           </div>
+          @if (o.supplierOrder?.status === 'failed' && o.supplierOrder?.error) { <p class="problem">{{ o.supplierOrder?.error }}</p> }
           <ul>@for (i of o.items; track $index) { <li>{{ i.title }}{{ i.variantTitle ? ' · ' + i.variantTitle : '' }} × {{ i.quantity }}@if (i.referred) { <span class="tm-tag tm-tint-cyan">referred</span> }</li> }</ul>
           <p class="muted">Ship {{ o.shippingRate?.label || '' }} to {{ o.address.line1 }}, {{ o.address.city }}, {{ o.address.state }} {{ o.address.postal_code }}{{ o.address.phone ? ' · ' + o.address.phone : '' }}</p>
           <p class="muted">16Ahead Store fee {{ o.platformFeeCents | money: true }}{{ o.commissionCents ? ' · referral commission ' + (o.commissionCents | money: true) : '' }}{{ o.refundedCents ? ' · refunded ' + (o.refundedCents | money: true) : '' }}</p>
@@ -92,6 +93,7 @@ import { MoneyPipe } from '../../../shared/money.pipe';
     ul { list-style: none; margin: 0; padding: 0; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
     li { display: flex; align-items: center; gap: 8px; }
     .muted { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .problem { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.5; background: color-mix(in srgb, #e5484d 12%, transparent); }
     .ful { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--bg); }
     .seg button { border: 0; min-height: 0; padding: 8px 14px; border-radius: 999px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }

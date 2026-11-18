@@ -61,7 +61,8 @@ interface UploadItem { key: string; name: string; kind: 'photo' | 'pdf'; status:
             <input class="tm-input" placeholder="Betty's Bridal" [ngModel]="storeName()" (ngModelChange)="storeName.set($event)"></label>
         }
         @case ('printful') {
-          <p class="note">Design your products in Printful (Stores → Add product), then make a private token: Printful → Developers → Your tokens, with access to that store. Orders here go to Printful automatically: they print, pack with your store's name and ship, and bill your Printful account.</p>
+          <p class="note">Design your products in Printful (Stores → Add product), then make a private token: Printful → Developers → Your tokens, with access to that store. Orders here go to Printful automatically: they print, pack with your store's name and ship, and charge your Printful account for each one.</p>
+          <p class="note"><strong>Add a card in Printful first</strong> (Settings → Billing). Without one, Printful turns down every order and the shopper's purchase doesn't get made.</p>
           <label class="field"><span class="tm-label">Printful private token</span>
             <input class="tm-input" type="password" autocomplete="off" [ngModel]="printfulToken()" (ngModelChange)="printfulToken.set($event); found.set(null)" (blur)="previewPrintful()"></label>
           <label class="field"><span class="tm-label">Store name</span>
