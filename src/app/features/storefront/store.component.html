@@ -150,7 +150,7 @@
           @if (r.looks.length) {
             <div class="source"><span class="tm-tag tm-tint-green">✓ In stock at {{ shortName() }} · {{ r.looks.length }} look{{ r.looks.length === 1 ? '' : 's' }}</span><span>{{ address() }}</span></div>
             @if (r.heading) { <h2 class="heading">{{ r.heading }}</h2> }
-            @if (r.note) { <p class="note">{{ r.note }}</p> }
+            @if (r.note) { <p class="note">{{ r.note }}</p> } @else if (refining()) { <p class="note">Putting together the best picks…</p> }
             @if (r.looks.length > 1) {
               <div class="layout-toggle" role="group" aria-label="Results layout">
                 <button type="button" [class.on]="layout() === 'compare'" [attr.aria-pressed]="layout() === 'compare'" (click)="layoutChoice.set('compare')">Best match</button>

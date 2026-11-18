@@ -26,8 +26,9 @@ export class StorefrontService {
     return this.api.post( `/storefront/${ encodeURIComponent( slug ) }/taps`, { categoryId } );
   }
 
-  search ( slug: string, query: string ): Promise<SearchResult> {
-    return this.api.post( `/storefront/${ encodeURIComponent( slug ) }/search`, { query } );
+  /** ai: false returns the top matches at once, before the AI composes looks (about 20 seconds). */
+  search ( slug: string, query: string, ai = true ): Promise<SearchResult> {
+    return this.api.post( `/storefront/${ encodeURIComponent( slug ) }/search`, { query, ai } );
   }
 
   product ( slug: string, productId: string ): Promise<PublicProduct> {

@@ -20,7 +20,7 @@
       <input name="q" [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="What are you looking for?" aria-label="What are you looking for?" autocomplete="off"></label>
     <button type="submit" class="tm-btn tm-btn--primary find">Find</button>
   </form> @if (view() === 'search') { @if (searching()) { <p class="thinking"><span class="tm-dot tm-dot--pulse"></span>Searching every store…</p> } @else if (error()) { <p class="tm-error" role="alert">{{ error() }}</p> } @else { @if (result(); as r) { @if (r.items.length) { <div class="status"><span class="tm-tag tm-tint-green">✓ {{ r.items.length }} item{{ r.items.length === 1 ? '' : 's' }} · {{ r.stores.length }} store{{ r.stores.length === 1 ? '' : 's' }}</span><span>Searched {{ r.storesSearched }} store{{ r.storesSearched === 1 ? '' : 's' }}{{ city() ? ' in ' + city() : '' }}</span></div>
-  <h1 class="h2">{{ r.query }}, from {{ r.stores.length }} local store{{ r.stores.length === 1 ? '' : 's' }}.</h1> @if (r.note) { <p class="note">{{ r.note }}</p> } <div class="controls">
+  <h1 class="h2">{{ r.query }}, from {{ r.stores.length }} local store{{ r.stores.length === 1 ? '' : 's' }}.</h1> @if (r.note) { <p class="note">{{ r.note }}</p> } @else if (refining()) { <p class="note thinking"><span class="tm-dot tm-dot--pulse"></span>Checking which one fits best…</p> } <div class="controls">
     <div class="seg small-seg">
       <button type="button" [class.on]="layout() === 'item'" (click)="layout.set('item')">By item</button>
       <button type="button" [class.on]="layout() === 'store'" (click)="layout.set('store')">By store</button>

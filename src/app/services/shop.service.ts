@@ -39,8 +39,9 @@ export class ShopService {
     return this.api.get( '/stores' );
   }
 
-  search ( query: string, storeIds?: string[] ): Promise<NetworkResult> {
-    return this.api.post( '/network/search', { query, storeIds } );
+  /** ai: false returns the matches at once, without the AI's pick and note (which takes about 20 seconds). */
+  search ( query: string, storeIds?: string[], ai = true ): Promise<NetworkResult> {
+    return this.api.post( '/network/search', { query, storeIds, ai } );
   }
 
   interest ( domain: string, body: { productUrl?: string; productTitle?: string; sessionId: string; email?: string; notify?: boolean } ): Promise<{ count: number }> {

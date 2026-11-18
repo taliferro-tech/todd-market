@@ -64,6 +64,9 @@ export class StoreComponent implements OnInit {
   readonly query = signal( '' );
   readonly result = signal<SearchResult | null>( null );
   readonly searching = signal( false );
+  /** The matches are showing; the AI's looks are still coming. */
+  readonly refining = signal( false );
+  private searchSeq = 0;
   readonly error = signal( '' );
   readonly rating = signal( '' );
   readonly adding = signal( '' );
@@ -214,13 +217,31 @@ export class StoreComponent implements OnInit {
     this.error.set( '' );
     this.rating.set( '' );
     void this.router.navigate( [], { queryParams: { q }, replaceUrl: true } );
+    // The top matches first, then the AI's looks replace them (Ty, 2026-11-18:
+    // every search waited about 20 seconds). A newer search wins.
+    const seq = ++this.searchSeq;
+    this.refining.set( false );
     try {
-      this.result.set( await this.api.search( store.slug, q ) );
+      const fast = await this.api.search( store.slug, q, false );
+      if ( seq !== this.searchSeq ) return;
+      this.result.set( fast );
     } catch ( error ) {
+      if ( seq !== this.searchSeq ) return;
       this.result.set( null );
       this.error.set( apiErrorMessage( error, 'Search is having trouble. Try again in a moment.' ) );
-    } finally {
       this.searching.set( false );
+      return;
+    }
+    this.searching.set( false );
+    if ( !this.result()?.looks?.length ) return;
+    this.refining.set( true );
+    try {
+      const full = await this.api.search( store.slug, q );
+      if ( seq === this.searchSeq ) this.result.set( full );
+    } catch {
+      // The matches are already showing.
+    } finally {
+      if ( seq === this.searchSeq ) this.refining.set( false );
     }
   }
 

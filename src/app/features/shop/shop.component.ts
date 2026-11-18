@@ -47,6 +47,9 @@ export class ShopComponent implements OnInit {
   readonly query = signal( '' );
   readonly result = signal<NetworkResult | null>( null );
   readonly searching = signal( false );
+  /** The matches are showing; the AI's pick and note are still coming. */
+  readonly refining = signal( false );
+  private searchSeq = 0;
   readonly layout = signal<'item' | 'store'>( 'item' );
   readonly storeFilter = signal<string | null>( null );
   readonly stores = signal<DirectoryStore[]>( [] );
@@ -111,13 +114,32 @@ export class ShopComponent implements OnInit {
     this.error.set( '' );
     this.storeFilter.set( null );
     void this.router.navigate( ['/'], { queryParams: { q }, replaceUrl: true } );
+    // The matches first (well under a second), then the AI's pick and note
+    // replace them when they arrive (Ty, 2026-11-18: "red shoes" waited 20s
+    // for everything). A newer search wins over an older one still finishing.
+    const seq = ++this.searchSeq;
+    this.refining.set( false );
     try {
-      this.result.set( await this.shop.search( q ) );
+      const fast = await this.shop.search( q, undefined, false );
+      if ( seq !== this.searchSeq ) return;
+      this.result.set( fast );
     } catch ( error ) {
+      if ( seq !== this.searchSeq ) return;
       this.result.set( null );
       this.error.set( apiErrorMessage( error, 'Search is having trouble. Try again in a moment.' ) );
-    } finally {
       this.searching.set( false );
+      return;
+    }
+    this.searching.set( false );
+    if ( ( this.result()?.items.length ?? 0 ) < 2 ) return;
+    this.refining.set( true );
+    try {
+      const full = await this.shop.search( q );
+      if ( seq === this.searchSeq ) this.result.set( full );
+    } catch {
+      // The matches are already showing; the AI's note is a nice-to-have.
+    } finally {
+      if ( seq === this.searchSeq ) this.refining.set( false );
     }
   }
 
