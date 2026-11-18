@@ -50,6 +50,7 @@ export class MetaPixelService {
   }
 
   initiateCheckout ( items: { productId: string; quantity: number; priceCents: number }[] ): void {
+    this.journey( 'checkout', `${ items.reduce( ( n, i ) => n + i.quantity, 0 ) } item(s), $${ dollars( items.reduce( ( n, i ) => n + i.priceCents * i.quantity, 0 ) ).toFixed( 2 ) }` );
     this.track( 'InitiateCheckout', {
       content_ids: [...new Set( items.map( ( i ) => i.productId ) )], content_type: 'product', currency: 'USD',
       num_items: items.reduce( ( n, i ) => n + i.quantity, 0 ),
@@ -59,6 +60,7 @@ export class MetaPixelService {
 
   /** eventID = the order ID, the same one the server sends. */
   purchase ( orderId: string, totalCents: number, items: { productId: string; quantity: number; priceCents: number }[] ): void {
+    this.journey( 'paid', `$${ dollars( totalCents ).toFixed( 2 ) }` );
     this.track( 'Purchase', {
       value: dollars( totalCents ), currency: 'USD', order_id: orderId, content_type: 'product',
       content_ids: [...new Set( items.map( ( i ) => i.productId ) )],
@@ -107,6 +109,12 @@ export class MetaPixelService {
     const fbclid = new URLSearchParams( this.document.location.search ).get( 'fbclid' );
     if ( !fbc && fbclid ) fbc = `fb.1.${ Date.now() }.${ fbclid }`;
     return { fbp: read( '_fbp' ), fbc, sourceUrl: this.document.location.href.split( '#' )[0], optOut: false };
+  }
+
+  /** A step on the visitor's journey (public/journey.js; the health page's Journeys). */
+  private journey ( kind: string, label: string ): void {
+    if ( !this.browser ) return;
+    try { ( this.document.defaultView as unknown as { journey?: ( k: string, l: string ) => void } )?.journey?.( kind, label ); } catch { /* never block checkout */ }
   }
 
   private track ( event: string, data?: Record<string, unknown>, eventId?: string ): void {
