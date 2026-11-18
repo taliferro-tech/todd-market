@@ -12,7 +12,9 @@
  * read once: utm_source/medium/campaign, a Facebook or Google ad click id,
  * else the referring site, else direct.
  *
- * Nothing runs on localhost or under browser automation (tests).
+ * Nothing runs on localhost or under browser automation (tests). Presses
+ * inside an element marked data-journey-off (a survey's answer buttons, whose
+ * words are the answer) aren't recorded.
  */
 ( function () {
   'use strict';
@@ -178,7 +180,7 @@
   // Pressed: buttons and links, by their words (or data-journey / aria-label).
   document.addEventListener( 'click', function ( event ) {
     var el = event.target && event.target.closest ? event.target.closest( '[data-journey],a,button,[role="button"],input[type="submit"],input[type="button"]' ) : null;
-    if ( !el ) return;
+    if ( !el || ( el.closest && el.closest( '[data-journey-off]' ) ) ) return;
     var label = el.getAttribute( 'data-journey' ) || el.getAttribute( 'aria-label' ) || el.value || el.innerText || el.getAttribute( 'title' ) || '';
     label = String( label ).replace( /\s+/g, ' ' ).trim();
     if ( !label && el.tagName === 'A' ) label = el.getAttribute( 'href' ) || '';
@@ -195,6 +197,7 @@
   document.addEventListener( 'focusin', function ( event ) {
     var el = event.target;
     if ( !el || !/^(INPUT|TEXTAREA|SELECT)$/.test( el.tagName ) || /^(button|submit|checkbox|radio|hidden)$/.test( el.type || '' ) ) return;
+    if ( el.closest && el.closest( '[data-journey-off]' ) ) return;
     var key = cleanPath() + '|' + formName( el.form );
     if ( started[key] ) return;
     started[key] = true;
