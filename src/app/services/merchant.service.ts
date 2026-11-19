@@ -264,7 +264,7 @@ export class MerchantService {
     return this.api.get( '/merchant/settings' );
   }
 
-  async saveSettings ( body: Partial<StoreSettings> & { name?: string; slug?: string; directoryCategory?: string } ): Promise<{ store: MerchantStore; policy: string }> {
+  async saveSettings ( body: Partial<StoreSettings> & { name?: string; slug?: string; directoryCategory?: string; announceOnFacebook?: boolean } ): Promise<{ store: MerchantStore; policy: string }> {
     const result = await this.api.put<{ store: MerchantStore; policy: string }>( '/merchant/settings', body );
     this.store.set( result.store );
     return result;

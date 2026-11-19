@@ -10,7 +10,7 @@ import { policySentence } from '../../../shared/return-policy';
 
 type Tab = 'store' | 'home' | 'products' | 'returns' | 'tax' | 'shipping';
 interface SheetRow { fileName: string; dataUrl: string; status: 'reading' | 'ready' | 'error' | 'adding' | 'added' | 'updated'; error: string; product: SheetPreview | null }
-interface Draft { name: string; slug: string; directoryCategory: string; settings: StoreSettings }
+interface Draft { name: string; slug: string; directoryCategory: string; announceOnFacebook: boolean; settings: StoreSettings }
 
 const US_STATES: [string, string][] = Object.entries( {
   AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
@@ -170,6 +170,11 @@ export class SettingsComponent implements OnInit {
     this.savedNote.set( false );
   }
 
+  toggleAnnounce ( on: boolean ): void {
+    this.draft.update( ( d ) => d ? { ...d, announceOnFacebook: on } : d );
+    this.savedNote.set( false );
+  }
+
   setAddress ( key: 'line1' | 'city' | 'state' | 'postal_code', value: string ): void {
     const current = this.draft()?.settings.store.address || { line1: '', city: '', state: '', postal_code: '' };
     this.patch( 'store', { address: { ...current, [key]: value } } );
@@ -244,7 +249,7 @@ export class SettingsComponent implements OnInit {
     this.saving.set( true );
     this.error.set( '' );
     try {
-      const { store } = await this.merchant.saveSettings( { name: d.name, slug: d.slug, directoryCategory: d.directoryCategory, ...d.settings } );
+      const { store } = await this.merchant.saveSettings( { name: d.name, slug: d.slug, directoryCategory: d.directoryCategory, announceOnFacebook: d.announceOnFacebook, ...d.settings } );
       this.reset( store );
       this.savedNote.set( true );
     } catch ( error ) {
@@ -345,7 +350,7 @@ export class SettingsComponent implements OnInit {
   private reset ( store: MerchantStore ): void {
     this.store.set( store );
     this.logoUrl.set( store.brand?.logoUrl ?? null );
-    const draft: Draft = { name: store.name, slug: store.slug, directoryCategory: store.directoryCategory, settings: JSON.parse( JSON.stringify( store.settings ) ) };
+    const draft: Draft = { name: store.name, slug: store.slug, directoryCategory: store.directoryCategory, announceOnFacebook: store.announceOnFacebook !== false, settings: JSON.parse( JSON.stringify( store.settings ) ) };
     this.saved.set( JSON.stringify( draft ) );
     this.draft.set( draft );
   }

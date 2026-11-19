@@ -45,6 +45,10 @@ export interface MerchantStore {
   /** Run by the master tenant until a real store in its category joins. */
   seed?: boolean;
   isSample?: boolean;
+  /** Announce the store on the 16Ahead Store Facebook Page when it goes live. On unless false. */
+  announceOnFacebook?: boolean;
+  /** Set once the go-live announcement ran: published, retrying, failed or skipped (with why). */
+  facebookAnnouncement?: { status: string; reason: string; postId: string; pageName?: string; at: string } | null;
   /** Set when the store began as a claimed listing from the Find crawl. */
   claimedListing: { domain: string; interestCount: number } | null;
   /** Return labels: Shippo switched on for TODD (available), and connected by this store. */

@@ -70,6 +70,14 @@
             </div>
             <div class="toggle-row wide"><span><strong>Offer in-store pickup</strong><span>Shoppers can choose pickup at checkout.</span></span>
               <button type="button" role="switch" class="switch" [class.on]="d.settings.store.pickup" [attr.aria-checked]="d.settings.store.pickup" (click)="togglePickup(!d.settings.store.pickup)"><span></span></button></div>
+            @if (!store()?.seed && !store()?.isSample) {
+              @if (store()?.facebookAnnouncement?.status === 'published') {
+                <div class="toggle-row wide"><span><strong>Announced on Facebook</strong><span>We posted your store on the 16Ahead Store Facebook Page when it went live.</span></span></div>
+              } @else {
+                <div class="toggle-row wide"><span><strong>Announce my store on 16Ahead's Facebook</strong><span>When your store goes live, we post it on the 16Ahead Store Facebook Page: your name, town, what you sell, your logo and your link.</span></span>
+                  <button type="button" role="switch" class="switch" [class.on]="d.announceOnFacebook" [attr.aria-checked]="d.announceOnFacebook" aria-label="Announce my store on 16Ahead's Facebook" (click)="toggleAnnounce(!d.announceOnFacebook)"><span></span></button></div>
+              }
+            }
           </div>
         }
         @case ('home') {
