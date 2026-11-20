@@ -130,6 +130,14 @@
         }
         @case ('products') {
           <p class="muted note">Looking for your products? They're under <a routerLink="/app/products">Products</a> at the top. This page is only for importing supplier spec sheets.</p>
+          @if (store()?.supplier?.provider === 'printful' && store()?.supplier?.connected) {
+            <div class="card" data-cy="printful-sync">
+              <strong>Printful{{ store()?.supplier?.name ? ' · ' + store()?.supplier?.name : '' }}</strong>
+              <span class="muted">New designs in Printful are added to your store every night, priced at your Printful retail price (never less than 1.6 × Printful's cost). Sizes Printful stops making are switched off. Your titles, photos, prices and the sizes you switched off are never changed.</span>
+              <div><button type="button" class="tm-btn tm-btn--primary" [disabled]="printfulSyncing()" (click)="syncPrintful()">{{ printfulSyncing() ? 'Syncing…' : 'Sync from Printful now' }}</button></div>
+              @if (printfulResult()) { <span class="muted">{{ printfulResult() }}</span> }
+            </div>
+          }
           <div class="card">
             <strong>Add products from a supplier spec sheet</strong>
             <span class="muted">Lenovo partner spec sheets (.xlsx), one product per file. We use the photo, specs, part number and UPC, and price each one at the reseller price plus your markup. A part number you already sell gets its new price and stock instead of a second listing.</span>

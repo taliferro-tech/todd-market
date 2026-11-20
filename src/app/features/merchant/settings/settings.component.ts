@@ -59,6 +59,8 @@ export class SettingsComponent implements OnInit {
   readonly saving = signal( false );
   readonly savedNote = signal( false );
   readonly error = signal( '' );
+  readonly printfulSyncing = signal( false );
+  readonly printfulResult = signal( '' );
   /** The store's logo (Settings → Store): shown at the top of the store page. */
   readonly logoUrl = signal<string | null>( null );
   readonly logoBusy = signal( false );
@@ -194,6 +196,21 @@ export class SettingsComponent implements OnInit {
       if ( typeof window !== 'undefined' ) window.location.href = url;
     } catch ( error ) {
       this.error.set( apiErrorMessage( error ) );
+    }
+  }
+
+  async syncPrintful (): Promise<void> {
+    this.printfulSyncing.set( true );
+    this.printfulResult.set( '' );
+    try {
+      const r = await this.merchant.syncPrintful();
+      if ( r.error ) this.printfulResult.set( r.error );
+      else if ( !r.created.length && !r.updated.length ) this.printfulResult.set( 'Up to date: nothing new in Printful.' );
+      else this.printfulResult.set( [r.created.length ? `Added ${ r.created.length } product${ r.created.length === 1 ? '' : 's' }: ${ r.created.join( ', ' ) }.` : '', r.updated.length ? `Updated ${ r.updated.length }: ${ r.updated.map( ( u ) => `${ u.title } (${ u.notes.join( ', ' ) })` ).join( '; ' ) }.` : ''].filter( Boolean ).join( ' ' ) );
+    } catch ( error ) {
+      this.error.set( apiErrorMessage( error ) );
+    } finally {
+      this.printfulSyncing.set( false );
     }
   }
 

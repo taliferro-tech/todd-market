@@ -303,6 +303,11 @@ export class MerchantService {
     return this.api.delete( '/merchant/settings/shippo' );
   }
 
+  /** Settings → Products: add what was designed in Printful since, drop what Printful no longer makes. */
+  syncPrintful (): Promise<{ created: string[]; updated: { title: string; notes: string[] }[]; unchanged: number; error?: string }> {
+    return this.api.post( '/merchant/settings/printful/sync' );
+  }
+
   shipExchange ( returnId: string, tracking: string ): Promise<unknown> {
     return this.api.post( `/merchant/returns/${ encodeURIComponent( returnId ) }/ship-exchange`, { tracking } );
   }

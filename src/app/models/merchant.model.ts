@@ -53,6 +53,8 @@ export interface MerchantStore {
   claimedListing: { domain: string; interestCount: number } | null;
   /** Return labels: Shippo switched on for TODD (available), and connected by this store. */
   shippo?: { available: boolean; connected: boolean };
+  /** Print-on-demand (Printful): connected stores sync nightly; "Sync from Printful" runs it now. */
+  supplier?: { provider: string; connected: boolean; name: string | null } | null;
   settings: StoreSettings;
   stats: { productCount: number; photoCount: number; collectionCount: number; networkCount: number };
   stripe: { connected: boolean; chargesEnabled: boolean; payoutsEnabled: boolean; bankLast4: string | null; taxStatus: string | null; detailsSubmitted?: boolean; needsMore?: boolean };
