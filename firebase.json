@@ -2,15 +2,23 @@
   "hosting": {
     "site": "todd-market",
     "public": "dist/market/browser",
+    "predeploy": ["node scripts/route-host-files.mjs"],
     "trailingSlash": false,
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {
         "source": "/assets/video/**",
         "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+      },
+      {
+        "source": "/@(index.home.html|robots.market.txt|sitemap.market.xml)",
+        "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
       }
     ],
     "rewrites": [
+      { "source": "/", "function": { "functionId": "marketApi", "region": "us-central1" } },
+      { "source": "/robots.txt", "function": { "functionId": "marketApi", "region": "us-central1" } },
+      { "source": "/sitemap.xml", "function": { "functionId": "marketApi", "region": "us-central1" } },
       { "source": "/api/**", "function": { "functionId": "marketApi", "region": "us-central1" } },
       { "source": "/feeds/**", "function": { "functionId": "marketApi", "region": "us-central1" } },
       { "source": "/p/**", "function": { "functionId": "marketApi", "region": "us-central1" } },

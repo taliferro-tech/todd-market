@@ -17,6 +17,7 @@ import { shortStoreName, storePossessive } from '../../shared/short-store-name';
 import { MoneyPipe } from '../../shared/money.pipe';
 import { policySentence } from '../../shared/return-policy';
 import { storeAddress } from '../../shared/store-address';
+import { CanonicalUrlService } from '../../shared/canonical-url';
 import { InterestDialogComponent } from '../shop/interest-dialog.component';
 import { BagDrawerComponent } from './bag-drawer.component';
 
@@ -45,6 +46,7 @@ export class StoreComponent implements OnInit {
   private readonly route = inject( ActivatedRoute );
   private readonly router = inject( Router );
   private readonly seo = inject( SeoService );
+  private readonly canonical = inject( CanonicalUrlService );
   private readonly document = inject( DOCUMENT );
   readonly bag = inject( BagService );
   readonly auth = inject( MarketAuthService );
@@ -143,10 +145,13 @@ export class StoreComponent implements OnInit {
     if ( JSON.stringify( store ) === JSON.stringify( this.store() ) && JSON.stringify( home ) === JSON.stringify( this.homeData() ) ) return;
     this.store.set( store );
     this.homeData.set( home );
-    this.seo.set( { title: `${ store.name } | 16Ahead Store`, description: store.heroLine || `Shop ${ store.name } on 16Ahead Store.`, path: `/${ store.slug }` } );
+    // A verified own domain: the store's pages name it, as the server-built page does.
+    this.canonical.setStoreDomain( store.slug, store.domain );
+    const path = this.canonical.ownHost && !store.domain && !this.route.snapshot.paramMap.get( 'slug' ) ? '/' : `/${ store.slug }`;
+    this.seo.set( { title: `${ store.name } | 16Ahead Store`, description: store.heroLine || `Shop ${ store.name } on 16Ahead Store.`, path } );
     this.seo.setJsonLd( 'store-jsonld', {
-      '@context': 'https://schema.org', '@type': 'Store', name: store.name, url: `https://${ this.address() }`,
-      hasOfferCatalog: { '@type': 'OfferCatalog', url: `https://16ahead.store/feeds/${ store.slug }.json` },
+      '@context': 'https://schema.org', '@type': 'Store', name: store.name, url: store.domain ? `https://${ store.domain }/` : `https://${ this.address() }`,
+      hasOfferCatalog: { '@type': 'OfferCatalog', url: `${ store.domain ? `https://${ store.domain }` : 'https://16ahead.store' }/feeds/${ store.slug }.json` },
     } );
   }
 

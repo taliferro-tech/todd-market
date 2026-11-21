@@ -2,12 +2,12 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 
-import { environment } from '../../environments/environment';
+import { CanonicalUrlService } from '../shared/canonical-url';
 
 export interface SeoPage {
   title: string;
   description: string;
-  /** Path on 16ahead.store, for og:url. The canonical link follows the router (canonical-url.ts). */
+  /** The page's path, for og:url (on 16ahead.store, or the store's own domain: CanonicalUrlService). The canonical link follows the router (canonical-url.ts). */
   path: string;
   /** Leave the page out of search results (account, sign in, stores in draft). */
   noindex?: boolean;
@@ -19,9 +19,10 @@ export class SeoService {
   private readonly title = inject( Title );
   private readonly meta = inject( Meta );
   private readonly document = inject( DOCUMENT );
+  private readonly canonical = inject( CanonicalUrlService );
 
   set ( page: SeoPage ): void {
-    const url = `${ environment.PLATFORM_URL }${ page.path === '/' ? '/' : page.path }`;
+    const url = this.canonical.urlFor( page.path );
     this.title.setTitle( page.title );
     this.meta.updateTag( { name: 'description', content: page.description } );
     this.meta.updateTag( { property: 'og:title', content: page.title } );

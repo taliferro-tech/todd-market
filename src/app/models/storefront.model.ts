@@ -14,6 +14,8 @@ export interface PublicStore {
   shipping: ShippingRate[];
   freeShippingOverCents: number | null;
   location: string;
+  /** Its own domain, once verified (shop.amysshoes.com): its pages name it as their address. */
+  domain?: string;
 }
 
 /** A product as a card on the store home page (no reviews yet: rating stays null). */

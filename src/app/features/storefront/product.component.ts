@@ -7,6 +7,7 @@ import { MetaPixelService } from '../../services/meta-pixel.service';
 import { SeoService } from '../../services/seo.service';
 import { StorefrontService } from '../../services/storefront.service';
 import { brandStyle } from '../../shared/brand/brand-tuning';
+import { CanonicalUrlService } from '../../shared/canonical-url';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { MoneyPipe } from '../../shared/money.pipe';
 import { BagDrawerComponent } from './bag-drawer.component';
@@ -31,6 +32,7 @@ export class ProductComponent implements OnInit {
   private readonly api = inject( StorefrontService );
   private readonly route = inject( ActivatedRoute );
   private readonly seo = inject( SeoService );
+  private readonly canonical = inject( CanonicalUrlService );
   private readonly pixel = inject( MetaPixelService );
   readonly bag = inject( BagService );
 
@@ -103,6 +105,7 @@ export class ProductComponent implements OnInit {
       this.product.set( product );
       this.picked.set( this.initialPicks( product ) );
       this.pixel.viewContent( product );
+      this.canonical.setStoreDomain( store.slug, store.domain );
       this.seo.set( { title: `${ product.title } | ${ store.name }`, description: product.description.slice( 0, 160 ) || `${ product.title } at ${ store.name } on 16Ahead Store.`, path: `/${ store.slug }/products/${ product.id }` } );
     } catch {
       this.notFound.set( true );
