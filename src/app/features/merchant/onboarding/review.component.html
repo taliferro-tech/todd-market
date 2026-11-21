@@ -48,8 +48,8 @@
         </div>
         @if (error()) { <span class="tm-error" role="alert">{{ error() }}</span> }
         <div class="actions">
-          <button type="button" class="tm-btn tm-btn--primary go" [disabled]="busy()" (click)="next()">Next: get paid</button>
-          <button type="button" class="tm-btn" (click)="startOver()">Start over</button>
+          <button type="button" class="tm-btn tm-btn--primary go" [disabled]="busy() || browsing()" (click)="next()">Next: get paid</button>
+          <button type="button" class="tm-btn" [disabled]="browsing()" (click)="startOver()">Start over</button>
         </div>
       </div>
     </div>

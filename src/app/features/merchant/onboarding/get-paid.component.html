@@ -28,7 +28,7 @@
           } @else {
             <div class="phase__body">
               @if (needsMore()) { <span class="meta">Stripe needs a few more details.</span> }
-              <button type="button" class="tm-btn tm-btn--stripe" [disabled]="opening()" (click)="openStripe('accept')">{{ opening() ? 'Opening Stripe…' : 'Continue with Stripe' }}</button>
+              <button type="button" class="tm-btn tm-btn--stripe" [disabled]="opening() || browsing()" (click)="openStripe('accept')">{{ opening() ? 'Opening Stripe…' : 'Continue with Stripe' }}</button>
               <span class="meta">Opens Stripe's secure page, then brings you back here.</span>
             </div>
           }
@@ -50,7 +50,7 @@
             @if (syncing() === 'payouts' || checkingId()) {
               <div class="phase__body working"><span class="tm-dot tm-dot--pulse"></span>Checking your ID… Stripe emails you if it needs anything else.</div>
             } @else if (accepting()) {
-              <div class="phase__body"><button type="button" class="tm-btn" [disabled]="opening()" (click)="openStripe('payouts')">Verify now</button></div>
+              <div class="phase__body"><button type="button" class="tm-btn" [disabled]="opening() || browsing()" (click)="openStripe('payouts')">Verify now</button></div>
             }
           }
         </div>

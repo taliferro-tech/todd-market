@@ -55,7 +55,7 @@
       </div>
       @if (error()) { <span class="tm-error" role="alert">{{ error() }}</span> }
       <div class="actions">
-        <button type="button" class="tm-btn tm-btn--primary go" [disabled]="busy()" (click)="build()">{{ busy() ? 'Starting…' : 'Build my store' }}</button>
+        <button type="button" class="tm-btn tm-btn--primary go" [disabled]="busy() || browsing()" (click)="build()">{{ busy() ? 'Starting…' : 'Build my store' }}</button>
         <span class="meta">About a minute. You can change all of this later.</span>
       </div>
     </div>

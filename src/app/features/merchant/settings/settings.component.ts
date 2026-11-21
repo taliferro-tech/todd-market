@@ -27,6 +27,8 @@ const US_STATES: [string, string][] = Object.entries( {
 } )
 export class SettingsComponent implements OnInit {
   private readonly merchant = inject( MerchantService );
+  /** Signed out: saving is off (the shell explains browse mode). */
+  readonly browsing = this.merchant.browsing;
   private readonly route = inject( ActivatedRoute );
   private readonly router = inject( Router );
 

@@ -64,7 +64,7 @@
               } @else {
                 <div class="dom-add">
                   <input class="tm-input" placeholder="shop.yourstore.com" [ngModel]="domainInput()" (ngModelChange)="domainInput.set($event)">
-                  <button type="button" class="tm-btn tm-btn--primary" [disabled]="domainBusy() || !domainInput()" (click)="connectDomain()">{{ domainBusy() ? 'Connecting…' : 'Connect' }}</button>
+                  <button type="button" class="tm-btn tm-btn--primary" [disabled]="domainBusy() || !domainInput() || browsing()" (click)="connectDomain()">{{ domainBusy() ? 'Connecting…' : 'Connect' }}</button>
                 </div>
               }
             </div>
@@ -171,7 +171,7 @@
                 }
               </ul>
               @if (sheetsReady().length) {
-                <button type="button" class="tm-btn tm-btn--primary add-sheets" [disabled]="sheetsBusy()" (click)="addSheets()">Add {{ sheetsReady().length }} {{ sheetsReady().length === 1 ? 'product' : 'products' }} to your store</button>
+                <button type="button" class="tm-btn tm-btn--primary add-sheets" [disabled]="sheetsBusy() || browsing()" (click)="addSheets()">Add {{ sheetsReady().length }} {{ sheetsReady().length === 1 ? 'product' : 'products' }} to your store</button>
               }
             }
           </div>
@@ -212,7 +212,7 @@
                   <div><button type="button" class="tm-btn tm-btn--ghost" (click)="disconnectShippo()">Disconnect Shippo</button></div>
                 } @else {
                   <span class="muted">Connect your Shippo account and we'll email shoppers a prepaid label when they start a return. Labels are billed to your Shippo account, not 16Ahead.</span>
-                  <div><button type="button" class="tm-btn tm-btn--primary" (click)="connectShippo()">Connect Shippo</button></div>
+                  <div><button type="button" class="tm-btn tm-btn--primary" [disabled]="browsing()" (click)="connectShippo()">Connect Shippo</button></div>
                 }
               </div>
             </div>
@@ -271,6 +271,6 @@
   <div class="unsaved" role="region" aria-label="Unsaved changes">
     <span>Unsaved changes</span>
     <button type="button" class="tm-btn tm-btn--ghost discard" (click)="discard()">Discard</button>
-    <button type="button" class="tm-btn save" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save' }}</button>
+    <button type="button" class="tm-btn save" [disabled]="saving() || browsing()" (click)="save()">{{ saving() ? 'Saving…' : 'Save' }}</button>
   </div>
 }

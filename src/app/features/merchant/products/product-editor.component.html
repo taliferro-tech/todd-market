@@ -3,13 +3,13 @@
   <div class="crumb"><span class="muted">Products</span><strong>{{ isNew() ? 'Add product' : 'Edit product' }}</strong></div>
   @if (!loading() && (isNew() || loaded())) {
     <div class="bar__actions">
-      @if (!isNew()) { <button type="button" class="tm-btn tm-btn--ghost danger" [disabled]="!!saving()" (click)="remove()"><tm-icon name="trash" [size]="16" />Delete</button> }
+      @if (!isNew()) { <button type="button" class="tm-btn tm-btn--ghost danger" [disabled]="!!saving() || browsing()" (click)="remove()"><tm-icon name="trash" [size]="16" />Delete</button> }
       @if (isLive()) {
-        <button type="button" class="tm-btn" [disabled]="!!saving()" (click)="save('draft')">{{ saving() === 'draft' ? 'Saving…' : 'Unpublish' }}</button>
-        <button type="button" class="tm-btn tm-btn--primary" [disabled]="!!saving()" (click)="save('publish')">{{ saving() === 'publish' ? 'Saving…' : 'Save' }}</button>
+        <button type="button" class="tm-btn" [disabled]="!!saving() || browsing()" (click)="save('draft')">{{ saving() === 'draft' ? 'Saving…' : 'Unpublish' }}</button>
+        <button type="button" class="tm-btn tm-btn--primary" [disabled]="!!saving() || browsing()" (click)="save('publish')">{{ saving() === 'publish' ? 'Saving…' : 'Save' }}</button>
       } @else {
-        <button type="button" class="tm-btn" [disabled]="!!saving()" (click)="save('draft')">{{ saving() === 'draft' ? 'Saving…' : 'Save draft' }}</button>
-        <button type="button" class="tm-btn tm-btn--primary" [disabled]="!!saving()" (click)="save('publish')">{{ saving() === 'publish' ? 'Publishing…' : 'Publish product' }}</button>
+        <button type="button" class="tm-btn" [disabled]="!!saving() || browsing()" (click)="save('draft')">{{ saving() === 'draft' ? 'Saving…' : 'Save draft' }}</button>
+        <button type="button" class="tm-btn tm-btn--primary" [disabled]="!!saving() || browsing()" (click)="save('publish')">{{ saving() === 'publish' ? 'Publishing…' : 'Publish product' }}</button>
       }
     </div>
   }

@@ -47,6 +47,8 @@ function dollars ( cents: number | null ): string {
 } )
 export class ProductEditorComponent implements OnInit {
   readonly merchant = inject( MerchantService );
+  /** Signed out: saving is off (the shell explains browse mode). */
+  readonly browsing = this.merchant.browsing;
   private readonly route = inject( ActivatedRoute );
   private readonly router = inject( Router );
 

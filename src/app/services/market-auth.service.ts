@@ -7,6 +7,7 @@ import {
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 import { environment } from '../../environments/environment';
+import { BROWSE_SAVE_MESSAGE } from './browse-mode';
 import { MarketApiService } from './market-api.service';
 
 const DEV_SIGNED_OUT = 'tm-dev-signed-out';
@@ -61,7 +62,12 @@ export class MarketAuthService {
    * shopper straight back to sign in.
    */
   get ready (): Promise<User | null> {
-    return this.restored.then( () => this.currentUser() );
+    return this.restored.then( () => {
+      const user = this.currentUser();
+      // Settle the signal too, so pages that open next know at once whether they're in browse mode.
+      if ( this.user() === undefined ) this.user.set( user );
+      return user;
+    } );
   }
 
   constructor () {
@@ -142,16 +148,19 @@ export class MarketAuthService {
 
   /** Adds a passkey to the signed-in account. */
   async addPasskey (): Promise<Passkey> {
+    if ( !this.user() ) throw { error: { error: BROWSE_SAVE_MESSAGE } };
     const { challengeId, options } = await this.api.post<{ challengeId: string; options: Parameters<typeof startRegistration>[0]['optionsJSON'] }>( '/account/passkeys/options' );
     const response = await startRegistration( { optionsJSON: options } );
     return this.api.post<Passkey>( '/account/passkeys', { challengeId, response } );
   }
 
   async listPasskeys (): Promise<Passkey[]> {
+    if ( !this.user() ) return [];
     return ( await this.api.get<{ passkeys: Passkey[] }>( '/account/passkeys' ) ).passkeys;
   }
 
   async removePasskey ( id: string ): Promise<void> {
+    if ( !this.user() ) throw { error: { error: BROWSE_SAVE_MESSAGE } };
     await this.api.delete( `/account/passkeys/${ encodeURIComponent( id ) }` );
   }
 

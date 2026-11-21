@@ -96,6 +96,8 @@ export class BuildComponent implements OnInit {
     try {
       const job = await this.merchant.build( this.jobId );
       this.job.set( job );
+      // Browse mode shows a sample build standing still: nothing to poll.
+      if ( this.merchant.browsing() ) return;
       if ( job.status === 'done' ) {
         await this.merchant.load();
         this.timer = setTimeout( () => void this.router.navigateByUrl( '/app/onboarding/review' ), 900 );

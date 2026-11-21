@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { signedInGuard } from './services/auth.guard';
+import { sessionReadyGuard, signedInGuard } from './services/auth.guard';
 
 export const routes: Routes = [
   // Shoppers: "/" is Search all stores, toggled with the Store directory
@@ -24,7 +24,8 @@ export const routes: Routes = [
   },
   {
     path: 'app',
-    canActivate: [signedInGuard],
+    // Signed out, every seller page opens in browse mode (services/browse-mode.ts).
+    canActivate: [sessionReadyGuard],
     loadComponent: () => import( './features/merchant/merchant-shell.component' ).then( ( m ) => m.MerchantShellComponent ),
     children: [
       { path: '', pathMatch: 'full', loadComponent: () => import( './features/merchant/merchant-home.component' ).then( ( m ) => m.MerchantHomeComponent ) },
@@ -46,7 +47,7 @@ export const routes: Routes = [
   },
   {
     path: 'account',
-    canActivate: [signedInGuard],
+    canActivate: [sessionReadyGuard],
     loadComponent: () => import( './features/account/account-shell.component' ).then( ( m ) => m.AccountShellComponent ),
     children: [
       { path: '', pathMatch: 'full', title: 'Orders | 16Ahead Store', loadComponent: () => import( './features/account/orders-list.component' ).then( ( m ) => m.OrdersListComponent ) },

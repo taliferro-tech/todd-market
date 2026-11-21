@@ -3,8 +3,10 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter } from 'rxjs';
 
 import { ONBOARDING_STEPS, OnboardingStep } from '../../models/merchant.model';
+import { merchantBrowseNote } from '../../services/browse-mode';
 import { MarketAuthService } from '../../services/market-auth.service';
 import { MerchantService } from '../../services/merchant.service';
+import { BrowseNoteComponent } from '../../shared/browse-note/browse-note.component';
 import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.component';
 
 /**
@@ -15,7 +17,7 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
 @Component( {
   selector: 'tm-merchant-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, PlatformMenuComponent],
+  imports: [RouterOutlet, RouterLink, PlatformMenuComponent, BrowseNoteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'tt-page' },
   template: `
@@ -51,6 +53,7 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
         <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''"
           [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" />
       </header>
+      @if (browseNote()) { <tm-browse-note [note]="browseNote()" who="merchant" [next]="path()" /> }
       <router-outlet />
     </div>`,
   styles: [`
@@ -86,7 +89,10 @@ export class MerchantShellComponent {
     return match ? match[1] as OnboardingStep : null;
   } );
   readonly stepIndex = computed( () => this.steps.findIndex( ( s ) => s.key === this.onboardingStep() ) );
-  readonly section = computed( () => this.url().split( /[?#]/ )[0].split( '/' )[2] || '' );
+  readonly path = computed( () => this.url().split( /[?#]/ )[0] );
+  readonly section = computed( () => this.path().split( '/' )[2] || '' );
+  /** Signed out: what this page is for, and that it's a sample with saving off. */
+  readonly browseNote = computed( () => this.merchant.browsing() ? merchantBrowseNote( this.url() ) : '' );
   /** The store switcher, for users who manage more than one store (seed stores). */
   readonly switcher = computed( () => {
     const stores = this.merchant.stores();

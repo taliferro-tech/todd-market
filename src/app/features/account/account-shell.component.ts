@@ -1,20 +1,24 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 
+import { accountBrowseNote } from '../../services/browse-mode';
 import { MarketAuthService } from '../../services/market-auth.service';
+import { BrowseNoteComponent } from '../../shared/browse-note/browse-note.component';
 import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.component';
 
 /** Account (f08, m18): one TODD account at every store in the network. */
 @Component( {
   selector: 'tm-account-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, PlatformMenuComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, PlatformMenuComponent, BrowseNoteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'tt-page' },
   template: `
     <div class="page">
       <header class="head"><a routerLink="/" class="title">16Ahead <span>Store</span></a>
-        <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="true" [userName]="auth.user()?.displayName || ''" [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" /></header>
+        <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''" [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" /></header>
+      @if (browseNote()) { <tm-browse-note [note]="browseNote()" who="shopper" [next]="path()" /> }
       <div class="layout">
         <aside class="side">
           <div class="who"><span class="avatar">{{ initials() }}</span><div><strong>{{ auth.user()?.displayName || 'Your account' }}</strong><span>{{ auth.user()?.email }}</span></div></div>
@@ -57,6 +61,16 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
 export class AccountShellComponent {
   readonly auth = inject( MarketAuthService );
   private readonly router = inject( Router );
+  private readonly url = signal( this.router.url );
+  readonly path = computed( () => this.url().split( /[?#]/ )[0] );
+  /** Signed out: what this page is for, and that saving is off until they sign in. */
+  readonly browseNote = computed( () => this.auth.isSignedIn() ? '' : accountBrowseNote( this.url() ) );
+
+  constructor () {
+    this.router.events.pipe( filter( ( e ): e is NavigationEnd => e instanceof NavigationEnd ) )
+      .subscribe( ( e ) => this.url.set( e.urlAfterRedirects ) );
+  }
+
   readonly initials = computed( () => {
     const user = this.auth.user();
     const source = user?.displayName || user?.email || '?';

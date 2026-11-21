@@ -12,3 +12,13 @@ export const signedInGuard: CanActivateFn = async ( route, state ) => {
   const as = state.url.startsWith( '/app' ) || state.url.startsWith( '/claim' ) || state.url.startsWith( '/shippo-oauth-redirect' ) ? 'merchant' : 'shopper';
   return router.createUrlTree( ['/sign-in'], { queryParams: { as, next: state.url } } );
 };
+
+/**
+ * The seller app and the shopper account: open to everyone. Signed out they
+ * show in browse mode (sample or empty data, saving off), so this only waits
+ * for the session to be restored, and pages know which mode they're in.
+ */
+export const sessionReadyGuard: CanActivateFn = async () => {
+  await inject( MarketAuthService ).ready;
+  return true;
+};

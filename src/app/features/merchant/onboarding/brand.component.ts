@@ -19,6 +19,8 @@ const MAX_LOGO_BYTES = 1024 * 1024;
 } )
 export class BrandComponent implements OnInit {
   private readonly merchant = inject( MerchantService );
+  /** Signed out: saving is off (the shell explains browse mode). */
+  readonly browsing = this.merchant.browsing;
   private readonly router = inject( Router );
 
   readonly storeName = signal( '' );

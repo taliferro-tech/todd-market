@@ -98,7 +98,7 @@ interface UploadItem { key: string; name: string; kind: 'photo' | 'pdf'; status:
 
       @if (error()) { <span class="tm-error" role="alert">{{ error() }}</span> }
       <div class="actions">
-        <button type="button" class="tm-btn tm-btn--primary next" [disabled]="!canContinue() || busy()" (click)="next()">{{ busy() ? (source() === 'manual' ? 'Opening your store…' : 'Reading your catalog…') : (source() === 'manual' ? 'Next: add your first product' : 'Next: your brand') }}</button>
+        <button type="button" class="tm-btn tm-btn--primary next" [disabled]="!canContinue() || busy() || browsing()" (click)="next()">{{ busy() ? (source() === 'manual' ? 'Opening your store…' : 'Reading your catalog…') : (source() === 'manual' ? 'Next: add your first product' : 'Next: your brand') }}</button>
         @if (source() === 'files') { @if (uploadSummary()) { <span class="meta">{{ uploadSummary() }} ready. We read them while you set up your brand.</span> } }
         @else if (source() !== 'manual') {
           @if (found(); as f) { <span class="meta">{{ f.productCount.toLocaleString() }} products found{{ f.unpriced ? ' · ' + f.unpriced + ' without a price' : '' }}</span> }
@@ -141,6 +141,8 @@ interface UploadItem { key: string; name: string; kind: 'photo' | 'pdf'; status:
 } )
 export class ImportComponent implements OnInit {
   private readonly merchant = inject( MerchantService );
+  /** Signed out: saving is off (the shell explains browse mode). */
+  readonly browsing = this.merchant.browsing;
   private readonly router = inject( Router );
 
   readonly sources: { key: Source; mark: string; label: string; sub: string }[] = [

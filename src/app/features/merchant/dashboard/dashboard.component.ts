@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 
+import { BROWSE_SAVE_MESSAGE } from '../../../services/browse-mode';
 import { apiErrorMessage } from '../../../services/market-api.service';
 import { Dashboard, LedgerRow, MerchantService, NetworkNode } from '../../../services/merchant.service';
 import { MoneyPipe } from '../../../shared/money.pipe';
@@ -101,6 +102,11 @@ export class DashboardComponent implements OnInit {
   private async save ( body: Parameters<MerchantService['saveControls']>[0] ): Promise<void> {
     const data = this.data();
     if ( !data ) return;
+    // Browse mode: the controls stay as they are, and say why.
+    if ( this.merchant.browsing() ) {
+      this.error.set( BROWSE_SAVE_MESSAGE );
+      return;
+    }
     this.data.set( { ...data, controls: { ...data.controls, ...body } } );
     try {
       await this.merchant.saveControls( body );

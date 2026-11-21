@@ -24,6 +24,8 @@ import { StorePreviewComponent } from '../../../shared/store-preview/store-previ
 } )
 export class GetPaidComponent implements OnInit {
   private readonly merchant = inject( MerchantService );
+  /** Signed out: saving is off (the shell explains browse mode). */
+  readonly browsing = this.merchant.browsing;
   private readonly route = inject( ActivatedRoute );
   private readonly router = inject( Router );
   private readonly destroyRef = inject( DestroyRef );

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { selectedStoreId, setSelectedStoreId } from '../core/store-selection';
 import { BuildJob, CustomDomain, ManagedStore, HomeOptions, MerchantStore, SheetPreview, Palette, ReviewData, StoreBrand, StoreSettings, Voice } from '../models/merchant.model';
@@ -32,7 +32,9 @@ export interface MerchantReturn {
   exchange: { title: string; fromTitle: string; toTitle: string; quantity: number }[] | null;
 }
 export interface TaxRegistration { id: string; state: string; name: string; status: string }
+import { BROWSE_SAVE_MESSAGE, SAMPLE_BUILD, SAMPLE_REVIEW, SAMPLE_STORE, browseRefusal } from './browse-mode';
 import { MarketApiService } from './market-api.service';
+import { MarketAuthService } from './market-auth.service';
 
 export interface PricingProduct { id: string; title: string; image: string | null; priceCents: number | null; hidden: boolean }
 
@@ -80,6 +82,15 @@ export interface ImportRequest {
 @Injectable( { providedIn: 'root' } )
 export class MerchantService {
   private readonly api = inject( MarketApiService );
+  private readonly auth = inject( MarketAuthService );
+  /**
+   * Signed out (browse mode): every page shows the sample store or an empty
+   * list without calling the backend, and every save is refused with
+   * BROWSE_SAVE_MESSAGE. The routes wait for the session first, so this is
+   * settled before a page loads.
+   */
+  readonly browsing = computed( () => this.auth.user() === null );
+  readonly browseMessage = BROWSE_SAVE_MESSAGE;
   /** undefined until loaded; null when the merchant has no store yet. */
   readonly store = signal<MerchantStore | null | undefined>( undefined );
   /** Every store this user may manage; more than one shows the store switcher. */
@@ -91,6 +102,10 @@ export class MerchantService {
    * can't manage (another account signed in on this browser).
    */
   loadStores (): Promise<void> {
+    if ( this.browsing() ) {
+      this.stores.set( [] );
+      return Promise.resolve();
+    }
     this.storesLoaded ??= this.api.get<{ stores: ManagedStore[] }>( '/merchant/stores' )
       .then( ( { stores } ) => {
         this.stores.set( stores );
@@ -117,6 +132,10 @@ export class MerchantService {
   }
 
   async load (): Promise<MerchantStore | null> {
+    if ( this.browsing() ) {
+      this.store.set( SAMPLE_STORE );
+      return SAMPLE_STORE;
+    }
     await this.loadStores();
     const { store } = await this.api.get<{ store: MerchantStore | null; build?: BuildJob | null }>( '/merchant/store' );
     this.store.set( store );
@@ -126,198 +145,253 @@ export class MerchantService {
   /** The loaded store, loading it first if needed. */
   async current (): Promise<MerchantStore | null> {
     const store = this.store();
-    return store === undefined ? this.load() : store;
+    // The sample store from browse mode never outlives signing in.
+    return store === undefined || ( store === SAMPLE_STORE && !this.browsing() ) ? this.load() : store;
   }
 
   issueProducts ( issueId: string ): Promise<{ products: PricingProduct[] }> {
+    if ( this.browsing() ) return Promise.resolve( { products: [] } );
     return this.api.get( `/merchant/issues/${ encodeURIComponent( issueId ) }/products` );
   }
 
   updateProduct ( id: string, change: { title?: string; priceCents?: number } ): Promise<{ id: string; title: string; priceCents: number; issueResolved: boolean }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.patch( `/merchant/products/${ encodeURIComponent( id ) }`, change );
   }
 
   /** "Upload files": one photo or PDF (as a data: URL) before Import. */
   upload ( dataUrl: string, name: string ): Promise<{ id: string; kind: 'photo' | 'pdf'; name: string; url: string | null }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/uploads', { dataUrl, name } );
   }
 
   preview ( request: ImportRequest ): Promise<{ name: string; productCount: number; photoCount: number; unpriced: number }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/import/preview', request );
   }
 
   async import ( request: ImportRequest ): Promise<{ storeId: string; productCount: number; paletteFromTheme: boolean }> {
+    if ( this.browsing() ) return browseRefusal();
     const result = await this.api.post<{ storeId: string; productCount: number; paletteFromTheme: boolean }>( '/merchant/import', request );
     await this.load();
     return result;
   }
 
   async saveBrand ( body: { palette?: Partial<Palette>; logoDataUrl?: string; removeLogo?: boolean } ): Promise<StoreBrand> {
+    if ( this.browsing() ) return browseRefusal();
     const { brand } = await this.api.put<{ brand: StoreBrand }>( '/merchant/store/brand', body );
     this.store.update( ( store ) => store ? { ...store, brand } : store );
     return brand;
   }
 
   startBuild (): Promise<{ jobId: string }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/build' );
   }
 
   build ( jobId: string ): Promise<BuildJob> {
+    if ( this.browsing() ) return Promise.resolve( SAMPLE_BUILD );
     return this.api.get( `/merchant/build/${ encodeURIComponent( jobId ) }` );
   }
 
   async latestBuild (): Promise<BuildJob | null> {
+    if ( this.browsing() ) return SAMPLE_BUILD;
     const { build } = await this.api.get<{ store: MerchantStore | null; build?: BuildJob | null }>( '/merchant/store' );
     return build ?? null;
   }
 
   review (): Promise<ReviewData> {
+    if ( this.browsing() ) return Promise.resolve( SAMPLE_REVIEW );
     return this.api.get( '/merchant/review' );
   }
 
   async update ( body: { voice?: Voice; onboardingStep?: string } ): Promise<MerchantStore> {
+    if ( this.browsing() ) return browseRefusal();
     const { store } = await this.api.patch<{ store: MerchantStore }>( '/merchant/store', body );
     this.store.set( store );
     return store;
   }
 
   setCollection ( id: string, enabled: boolean ): Promise<unknown> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.patch( `/merchant/collections/${ encodeURIComponent( id ) }`, { enabled } );
   }
 
   resolveIssue ( id: string ): Promise<unknown> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( `/merchant/issues/${ encodeURIComponent( id ) }/resolve` );
   }
 
   async stripeLink ( phase: 'accept' | 'payouts' ): Promise<string> {
+    if ( this.browsing() ) return browseRefusal();
     const { url } = await this.api.post<{ url: string }>( '/merchant/stripe/link', { phase } );
     return url;
   }
 
   async syncStripe (): Promise<MerchantStore> {
+    if ( this.browsing() ) return browseRefusal();
     const { store } = await this.api.post<{ store: MerchantStore }>( '/merchant/stripe/sync' );
     this.store.set( store );
     return store;
   }
 
   async goLive (): Promise<MerchantStore> {
+    if ( this.browsing() ) return browseRefusal();
     const { store } = await this.api.post<{ store: MerchantStore }>( '/merchant/go-live' );
     this.store.set( store );
     return store;
   }
 
   connectDomain ( domain: string ): Promise<{ customDomain: CustomDomain }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/settings/domain', { domain } );
   }
 
   checkDomain (): Promise<{ customDomain: CustomDomain | null }> {
+    if ( this.browsing() ) return Promise.resolve( { customDomain: null } );
     return this.api.get( '/merchant/settings/domain' );
   }
 
   disconnectDomain (): Promise<unknown> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.delete( '/merchant/settings/domain' );
   }
 
   /** Products (6a): every product with stock and status, and the store's collections. */
   products (): Promise<{ products: ProductRow[]; collections: CollectionRef[] }> {
+    if ( this.browsing() ) return Promise.resolve( { products: [], collections: SAMPLE_REVIEW.collections.map( ( { id, name } ) => ( { id, name } ) ) } );
     return this.api.get( '/merchant/products' );
   }
 
   product ( id: string ): Promise<{ product: EditorProduct; collections: CollectionRef[] }> {
+    if ( this.browsing() ) return browseRefusal( "You're in browse mode. Sign in to see and edit your products." );
     return this.api.get( `/merchant/products/${ encodeURIComponent( id ) }` );
   }
 
   /** Add product: a new product ({ publish: true } shows it in the store; otherwise a draft). */
   createProduct ( body: ProductSave ): Promise<EditorProduct> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/products', body );
   }
 
   saveProduct ( id: string, body: ProductSave ): Promise<EditorProduct> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.put( `/merchant/products/${ encodeURIComponent( id ) }`, body );
   }
 
   deleteProduct ( id: string ): Promise<unknown> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.delete( `/merchant/products/${ encodeURIComponent( id ) }` );
   }
 
   /** One product photo (already shrunk), saved for the editor. */
   productPhoto ( dataUrl: string ): Promise<{ url: string }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/products/photos', { dataUrl } );
   }
 
   /** "Write it from the photos". */
   describeProduct ( images: string[], title: string ): Promise<{ description: string }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/products/describe', { images, title } );
   }
 
   /** Settings → Products: preview ({ add: false }) or add one supplier spec sheet (.xlsx). */
   supplierSheet ( body: { fileName: string; dataUrl: string; markupPct: number; add: boolean } ): Promise<{ product: SheetPreview; added?: 'new' | 'updated'; productId?: string }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/products/supplier-sheet', body );
   }
 
   /** Settings → Home page: collections with photos to pick from, and the suggested example searches. */
   homeOptions (): Promise<HomeOptions> {
+    if ( this.browsing() ) return Promise.resolve( { collections: [], automaticSearches: [] } );
     return this.api.get( '/merchant/settings/home' );
   }
 
   settings (): Promise<{ store: MerchantStore; categories: string[]; policy: string; taxRegistrations: TaxRegistration[] }> {
+    if ( this.browsing() ) return Promise.resolve( { store: SAMPLE_STORE, categories: ['Bridal', 'Clothing', 'Shoes', 'Gifts'], policy: '', taxRegistrations: [] } );
     return this.api.get( '/merchant/settings' );
   }
 
   async saveSettings ( body: Partial<StoreSettings> & { name?: string; slug?: string; directoryCategory?: string; announceOnFacebook?: boolean } ): Promise<{ store: MerchantStore; policy: string }> {
+    if ( this.browsing() ) return browseRefusal();
     const result = await this.api.put<{ store: MerchantStore; policy: string }>( '/merchant/settings', body );
     this.store.set( result.store );
     return result;
   }
 
   addTaxState ( state: string ): Promise<{ registration: TaxRegistration }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/settings/tax/registrations', { state } );
   }
 
   dashboard ( month?: string ): Promise<Dashboard> {
+    if ( this.browsing() ) return Promise.resolve( sampleDashboard() );
     return this.api.get( '/merchant/dashboard', { month } );
   }
 
   saveControls ( body: Partial<MerchantStore['referral']> ): Promise<{ referral: MerchantStore['referral'] }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.patch( '/merchant/referral-controls', body );
   }
 
   /** emailOptIns: buyers who ticked "Email me news and offers" (null when it couldn't be counted). */
   orders (): Promise<{ orders: MerchantOrder[]; returns: MerchantReturn[]; emailOptIns?: number | null }> {
+    if ( this.browsing() ) return Promise.resolve( { orders: [], returns: [], emailOptIns: null } );
     return this.api.get( '/merchant/orders' );
   }
 
   setFulfillment ( orderId: string, status: string, tracking?: string ): Promise<unknown> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( `/merchant/orders/${ encodeURIComponent( orderId ) }/fulfillment`, { status, tracking } );
   }
 
   connectShippo (): Promise<{ url: string }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/settings/shippo/connect' );
   }
 
   finishShippo ( code: string, state: string ): Promise<{ connected: boolean }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/settings/shippo/callback', { code, state } );
   }
 
   disconnectShippo (): Promise<{ connected: boolean }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.delete( '/merchant/settings/shippo' );
   }
 
   /** Settings → Products: add what was designed in Printful since, drop what Printful no longer makes. */
   syncPrintful (): Promise<{ created: string[]; updated: { title: string; notes: string[] }[]; unchanged: number; error?: string }> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( '/merchant/settings/printful/sync' );
   }
 
   shipExchange ( returnId: string, tracking: string ): Promise<unknown> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( `/merchant/returns/${ encodeURIComponent( returnId ) }/ship-exchange`, { tracking } );
   }
 
   receiveReturn ( returnId: string ): Promise<unknown> {
+    if ( this.browsing() ) return browseRefusal();
     return this.api.post( `/merchant/returns/${ encodeURIComponent( returnId ) }/received` );
   }
 
   async startOver (): Promise<void> {
+    if ( this.browsing() ) return browseRefusal();
     await this.api.post( '/merchant/start-over' );
     await this.load();
   }
+}
+
+/** Referrals in browse mode: the layout with nothing in it yet. */
+function sampleDashboard (): Dashboard {
+  const month = new Date().toLocaleDateString( 'en-US', { month: 'long', year: 'numeric' } );
+  return {
+    store: { id: SAMPLE_STORE.id, name: SAMPLE_STORE.name }, month, networkCount: 0, totalStores: 0,
+    kpis: { sent: 0, sentBought: 0, earnedCents: 0, nextPayDate: null, received: 0, receivedBought: 0, paidOutCents: 0, salesFromReferralsCents: 0 },
+    ledger: [], nodes: [],
+    controls: { ...SAMPLE_STORE.referral, categories: ['Bridal', 'Clothing', 'Shoes', 'Gifts'], blockedStores: [] },
+    qualify: Array.from( { length: 51 }, () => 0 ),
+  };
 }

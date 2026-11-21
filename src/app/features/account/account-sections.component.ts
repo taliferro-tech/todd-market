@@ -35,7 +35,7 @@ type Section = 'saved' | 'addresses' | 'payment-methods' | 'security';
           <input class="tm-input" placeholder="City" name="c" [(ngModel)]="draft.city">
           <input class="tm-input" placeholder="State" maxlength="2" name="s" [(ngModel)]="draft.state">
           <input class="tm-input" placeholder="ZIP" name="z" [(ngModel)]="draft.postal_code">
-          <button type="submit" class="tm-btn tm-btn--primary">Add address</button>
+          <button type="submit" class="tm-btn tm-btn--primary" [disabled]="browsing()">Add address</button>
         </form>
       }
       @case ('payment-methods') {
@@ -51,7 +51,7 @@ type Section = 'saved' | 'addresses' | 'payment-methods' | 'security';
           <div class="row addr"><span><strong>{{ k.name }}</strong><span>Added {{ k.createdAt ? (k.createdAt | date: 'MMM d, y') : 'just now' }}{{ k.lastUsedAt ? ' · last used ' + (k.lastUsedAt | date: 'MMM d') : '' }}</span></span><button type="button" class="tm-btn tm-btn--ghost" (click)="removePasskey(k.id)">Remove</button></div>
         } @empty { <p class="muted">No passkeys yet.</p> }
         @if (passkeySupported) {
-          <button type="button" class="tm-btn tm-btn--primary add-key" [disabled]="busy()" (click)="addPasskey()">{{ busy() ? 'Waiting for your device…' : 'Add a passkey' }}</button>
+          <button type="button" class="tm-btn tm-btn--primary add-key" [disabled]="busy() || browsing()" (click)="addPasskey()">{{ busy() ? 'Waiting for your device…' : 'Add a passkey' }}</button>
         } @else {
           <p class="muted">Passkeys can be added on 16ahead.store in a browser that supports them.</p>
         }
@@ -77,6 +77,8 @@ type Section = 'saved' | 'addresses' | 'payment-methods' | 'security';
 export class AccountSectionsComponent implements OnInit {
   private readonly route = inject( ActivatedRoute );
   private readonly account = inject( AccountService );
+  /** Signed out: saving is off (the shell explains browse mode). */
+  readonly browsing = this.account.browsing;
   private readonly auth = inject( MarketAuthService );
   readonly passkeySupported = this.auth.passkeysAvailable();
   readonly passkeys = signal<Passkey[]>( [] );
