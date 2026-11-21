@@ -4,6 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
+# Install the @taliferro/ui version the lockfile asks for, if it isn't already
+# (deploys never reinstall packages otherwise). No-op when it matches.
+./scripts/ensure-ui-package.sh
+
 trap 'echo "Deploy aborted - a previous step failed, nothing was deployed." >&2' ERR
 
 echo "Running TODD Market production hosting deploy"
