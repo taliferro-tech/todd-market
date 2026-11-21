@@ -27,7 +27,7 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "../../taliferro-ui/brand/products",
+                "input": "node_modules/@taliferro/ui/brand/products",
                 "output": "assets/brand/products"
               },
               {
@@ -112,11 +112,6 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "prebundle": {
-              "exclude": [
-                "@taliferro/ui"
-              ]
-            },
             "proxyConfig": "proxy.conf.json"
           }
         },

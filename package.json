@@ -2,6 +2,7 @@
   "name": "market",
   "version": "2026.11.20-build.2",
   "scripts": {
+    "auth:ui": "npx google-artifactregistry-auth",
     "ng": "ng",
     "start": "ng serve",
     "prebuild": "node scripts/update-build-version.mjs",
@@ -29,7 +30,7 @@
     "@angular/ssr": "~19.2.27",
     "@simplewebauthn/browser": "14.0.0",
     "@stripe/stripe-js": "^4.10.0",
-    "@taliferro/ui": "file:../../taliferro-ui",
+    "@taliferro/ui": "^1.0.0",
     "express": "^4.22.3",
     "firebase": "^12.18.0",
     "rxjs": "~7.8.0",
