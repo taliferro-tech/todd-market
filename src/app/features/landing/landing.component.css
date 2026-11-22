@@ -5,6 +5,11 @@
 .kicker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
 h1 { font-size: 60px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; text-wrap: balance; }
 .lead { font-size: 19px; line-height: 1.6; color: var(--muted); max-width: 560px; text-wrap: pretty; }
+.offer { display: grid; gap: 10px; margin: 0; padding: 18px 20px; border-radius: 20px; background: var(--surface); max-width: 560px; }
+.offer > div { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: baseline; }
+.offer dt { font-size: 13px; font-weight: 700; color: var(--text); }
+.offer dd { margin: 0; font-size: 15px; line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+@media (max-width: 480px) { .offer > div { grid-template-columns: 1fr; gap: 2px; } }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 4px; }
 .watch { padding: 0 20px; }
 
