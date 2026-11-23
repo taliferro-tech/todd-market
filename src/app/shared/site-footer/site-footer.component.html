@@ -1,17 +1,80 @@
 <!-- SYNCED FROM taliferro-ui/site-footer-component - edit it there. -->
-<footer class="tt-foot">
-  <div class="tt-foot__row tt-foot__app"><ng-content></ng-content></div>
-  <div class="tt-foot__row">
-    <a class="tt-foot__brand" [href]="company.url">{{ company.name }}</a>
-    <a [href]="'mailto:' + company.email">{{ company.email }}</a>
-    <a [href]="phoneHref">{{ company.phone }}</a>
-    <span>{{ company.address }}</span>
+<footer class="sf" aria-label="16Ahead">
+  <div class="sf__grid">
+    <section class="sf__brand">
+      <a class="sf__brand-head" [href]="company.url">
+        <img class="sf__ico--l" src="assets/brand/products/png/light/01-16ahead-64.png" alt="" width="40" height="40" />
+        <img class="sf__ico--d" src="assets/brand/products/png/dark/01-16ahead-64.png" alt="" width="40" height="40" />
+        <span class="sf__brand-name">{{ company.name }}</span>
+      </a>
+      <p class="sf__line">Sixteen apps, one login. Ask a question and get the next move for your business.</p>
+      <ul class="sf__contacts">
+        <li><a class="sf__contact" [href]="'mailto:' + company.email">
+          <span class="sf__tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
+          <span class="sf__contact-text">{{ company.email }}<small>Email</small></span>
+        </a></li>
+        <li><a class="sf__contact" [href]="phoneHref">
+          <span class="sf__tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <span class="sf__contact-text">{{ company.phone }}<small>Phone</small></span>
+        </a></li>
+        <li><a class="sf__contact" [href]="mapsHref" target="_blank" rel="noopener">
+          <span class="sf__tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+          <span class="sf__contact-text">{{ street }}<small>{{ city }}</small></span>
+        </a></li>
+      </ul>
+      <a class="sf__consult" [href]="consultHref">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+        Book a consultation
+      </a>
+    </section>
+
+    <section class="sf__col" *ngFor="let group of groups" [class.is-open]="open === group.id">
+      <button type="button" class="sf__head" (click)="toggle(group.id)" [attr.aria-expanded]="open === group.id" [attr.aria-controls]="'sf-' + group.id">
+        <span class="sf__title">{{ group.title }}</span>
+        <span class="sf__count">{{ group.apps.length }} apps</span>
+        <span class="sf__chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <p class="sf__desc">{{ group.description }}</p>
+      <div class="sf__body" [id]="'sf-' + group.id">
+        <ul class="sf__list">
+          <li *ngFor="let app of group.apps"><a [href]="app.url">
+            <img class="sf__ico--l" [src]="'assets/brand/products/png/light/' + app.icon + '-64.png'" alt="" width="22" height="22" loading="lazy" />
+            <img class="sf__ico--d" [src]="'assets/brand/products/png/dark/' + app.icon + '-64.png'" alt="" width="22" height="22" loading="lazy" />
+            <span>{{ app.label }}</span><span class="sf__go" aria-hidden="true">›</span>
+          </a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sf__col" [class.is-open]="open === 'company'">
+      <button type="button" class="sf__head" (click)="toggle('company')" [attr.aria-expanded]="open === 'company'" aria-controls="sf-company">
+        <span class="sf__title">Company</span>
+        <span class="sf__chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <p class="sf__desc">16Ahead and Taliferro Tech</p>
+      <div class="sf__body" id="sf-company">
+        <nav class="sf__company" aria-label="Company">
+          <a [href]="company.url">16Ahead home</a>
+          <span class="sf__company-app"><ng-content></ng-content></span>
+          <a *ngIf="careers" [href]="careers.url">{{ careers.label }}</a>
+        </nav>
+      </div>
+    </section>
   </div>
-  <nav class="tt-foot__row" aria-label="Taliferro Tech products">
-    <a *ngFor="let product of products" [href]="product.url">{{ product.label }}</a>
-  </nav>
-  <div class="tt-foot__row">
-    <a *ngFor="let link of company.links" [href]="link.url">{{ link.label }}</a>
-    <span>© {{ year }} {{ company.legalName }}</span>
+
+  <div class="sf__phone-contact">
+    <div class="sf__phone-buttons">
+      <a [href]="'mailto:' + company.email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>Email support</a>
+      <a [href]="phoneHref"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call us</a>
+    </div>
+    <a class="sf__address" [href]="mapsHref" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>{{ street }}<br />{{ city }}</span></a>
+  </div>
+
+  <div class="sf__bar">
+    <span class="sf__copy">© {{ year }} {{ company.legalName }}</span>
+    <nav class="sf__legal" aria-label="Legal">
+      <a *ngFor="let link of legal" [href]="link.url">{{ link.label }}</a>
+    </nav>
+    <span class="sf__build" *ngIf="build">{{ build }}</span>
   </div>
 </footer>
