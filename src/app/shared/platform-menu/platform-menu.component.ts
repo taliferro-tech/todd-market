@@ -33,6 +33,9 @@ const SEARCH_TINTS: Record<string, string> = Object.fromEntries( MENU_PRODUCTS.m
 import { SoundService } from '../../services/sound.service';
 import { PLATFORM_MENU_CONFIG } from './platform-menu.config';
 
+/** The Taliferro master account (environment.taliferroTenantId in the hub). */
+const MASTER_UID = 'yH3nWanUv0RqDCNfwXBOXLWuxt52';
+
 /**
  * The universal menu (design_handoff_outreach 3, 6a/6b): This app | Products
  * | Account, with search. Identical in every Taliferro web product - only
@@ -51,6 +54,8 @@ export class PlatformMenuComponent {
   @Input() isAdmin = false;
   /** The Taliferro master account: sees every admin item. */
   @Input() isMaster = false;
+  /** The signed-in person's uid; the master account's uid also counts as isMaster (for the Admin link). */
+  @Input() userId = '';
   @Input() userName = '';
   @Input() userEmail = '';
   /** Hide the Menu pill when the page shows its own trigger and calls open(). */
@@ -108,7 +113,24 @@ export class PlatformMenuComponent {
   get section (): MenuSection | undefined { return menuSectionFor( this.config.sections, this.router.url ); }
   get appTitle (): string { return this.section?.title || this.config.name; }
   get appItems (): MenuLink[] {
-    return ( this.section?.items || this.config.items ).filter( ( item ) => this.shown( item ) && menuMatches( this.query, item.label, item.keywords ) );
+    return this.withAdminLink( this.section?.items || this.config.items ).filter( ( item ) => this.shown( item ) && menuMatches( this.query, item.label, item.keywords ) );
+  }
+  /**
+   * One "Admin" link right under Today, so Admin is reachable from every app
+   * without typing the address. In the hub (which has /today and /admin
+   * itself) it shows for workspace admins and the master; in every other app
+   * it opens app.16ahead.com/admin and shows only for the master account.
+   */
+  private withAdminLink ( items: MenuLink[] ): MenuLink[] {
+    if ( !this.isLoggedIn || items.some( ( item ) => item.route === '/admin' || /\/\/app\.16ahead\.com\/admin/.test( item.url || '' ) ) ) return items;
+    const isHub = items.some( ( item ) => item.route === '/today' );
+    const isMaster = this.isMaster || ( !!this.userId && this.userId === MASTER_UID );
+    if ( isHub ? !( this.isAdmin || isMaster ) : !isMaster ) return items;
+    const admin: MenuLink = isHub
+      ? { label: 'Admin', icon: 'shield', route: '/admin', keywords: 'settings team workspaces guides how-to' }
+      : { label: 'Admin', icon: 'shield', url: 'https://app.16ahead.com/admin', keywords: 'settings team workspaces guides how-to' };
+    const today = items.findIndex( ( item ) => item.route === '/today' || /\/\/app\.16ahead\.com\/today/.test( item.url || '' ) );
+    return today < 0 ? [admin, ...items] : [...items.slice( 0, today + 1 ), admin, ...items.slice( today + 1 )];
   }
   get adminItems (): MenuLink[] {
     if ( !this.isLoggedIn ) return [];

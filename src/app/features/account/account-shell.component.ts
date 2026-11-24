@@ -17,7 +17,7 @@ import { PlatformMenuComponent } from '../../shared/platform-menu/platform-menu.
   template: `
     <div class="page">
       <header class="head"><a routerLink="/" class="title">16Ahead <span>Store</span></a>
-        <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''" [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" /></header>
+        <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''" [userEmail]="auth.user()?.email || ''" [userId]="auth.user()?.uid || ''" (signOut)="signOut()" /></header>
       @if (browseNote()) { <tm-browse-note [note]="browseNote()" who="shopper" [next]="path()" /> }
       <div class="layout">
         <aside class="side">

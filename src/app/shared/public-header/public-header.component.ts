@@ -41,7 +41,7 @@ export type PublicNavKey = 'how' | 'shop' | 'pricing' | 'ios' | 'help' | 'about'
       }
       <a class="tm-btn tm-btn--primary start" routerLink="/app/onboarding">Start selling</a>
       <app-platform-menu [shopper]="auth.isShopper()" shopperProfileRoute="/account" [hiddenRoutes]="auth.menuHiddenRoutes()" [isLoggedIn]="auth.isSignedIn()" [userName]="auth.user()?.displayName || ''"
-        [userEmail]="auth.user()?.email || ''" (signOut)="signOut()" />
+        [userEmail]="auth.user()?.email || ''" [userId]="auth.user()?.uid || ''" (signOut)="signOut()" />
     </header>`,
   styles: [`
     .bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 20px 40px; }
