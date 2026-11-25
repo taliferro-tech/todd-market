@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { environment } from '../../environments/environment';
+import type { VisitAttribution } from './checkout.service';
 
 type Fbq = ( ( ...args: unknown[] ) => void ) & { callMethod?: ( ...args: unknown[] ) => void; queue: unknown[]; loaded: boolean; version: string; push: unknown };
 
@@ -109,6 +110,20 @@ export class MetaPixelService {
     const fbclid = new URLSearchParams( this.document.location.search ).get( 'fbclid' );
     if ( !fbc && fbclid ) fbc = `fb.1.${ Date.now() }.${ fbclid }`;
     return { fbp: read( '_fbp' ), fbc, sourceUrl: this.document.location.href.split( '#' )[0], optOut: false };
+  }
+
+  /**
+   * Where this visit came from (public/journey.js: utm words and the Facebook
+   * ad click id), sent with checkout so the order records whether it came
+   * from an ad. Independent of the Pixel; the server drops the click id for
+   * a visitor who opted out.
+   */
+  attribution (): VisitAttribution | null {
+    if ( !this.browser ) return null;
+    try {
+      const read = ( this.document.defaultView as unknown as { journeyAttribution?: () => VisitAttribution | null } )?.journeyAttribution;
+      return read ? read() : null;
+    } catch { return null; }
   }
 
   /** A step on the visitor's journey (public/journey.js; the health page's Journeys). */

@@ -10,7 +10,10 @@
  * window.journey('step', 'Question 3 of 8') or
  * window.journey('checkout', 'Coffee mug'). Where the visit came from is
  * read once: utm_source/medium/campaign, a Facebook or Google ad click id,
- * else the referring site, else direct.
+ * else the referring site, else direct. utm_content and the Facebook click
+ * id (fbclid) are kept with it, and window.journeyAttribution() hands all of
+ * it to the Store's checkout, which saves it on the order (the weekly
+ * marketing report's orders from ads and return on ad spend).
  *
  * Nothing runs on localhost or under browser automation (tests). Presses
  * inside an element marked data-journey-off (a survey's answer buttons, whose
@@ -23,6 +26,7 @@
   var host = String( location.hostname || '' ).toLowerCase();
   if ( !host || /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test( host ) || navigator.webdriver ) {
     window.journey = noop;
+    window.journeyAttribution = function () { return null; };
     return;
   }
   var API = 'https://api.taliferro.tech/api/journey';
@@ -56,10 +60,17 @@
       source: source || ref || 'direct',
       medium: medium || ( ref && !source ? 'referral' : '' ),
       campaign: q.get( 'utm_campaign' ) || '',
+      content: q.get( 'utm_content' ) || '',
+      fbclid: ( q.get( 'fbclid' ) || '' ).slice( 0, 500 ),
       referrer: ref
     };
     write( 'sessionStorage', 'jr_s', JSON.stringify( session ) );
   }
+
+  // Where this visit came from, for the Store's checkout to save on the order.
+  window.journeyAttribution = function () {
+    return { source: session.source || '', medium: session.medium || '', campaign: session.campaign || '', content: session.content || '', fbclid: session.fbclid || '' };
+  };
 
   // Path without the query (it can carry emails or tokens), long ids folded.
   function cleanPath () {

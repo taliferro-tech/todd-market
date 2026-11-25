@@ -190,7 +190,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if ( !this.ready() || !this.bag.count() ) return;
     this.quoting.set( true );
     this.error.set( '' );
-    const body = { email: this.email().trim(), address: this.address(), lines: CheckoutService.lines( this.bag.items() ), shipping: this.shipping(), emailOptIns: this.emailOptIns(), tracking: this.pixel.cookies() };
+    const body = { email: this.email().trim(), address: this.address(), lines: CheckoutService.lines( this.bag.items() ), shipping: this.shipping(), emailOptIns: this.emailOptIns(), tracking: this.pixel.cookies(), attribution: this.pixel.attribution() };
     try {
       const current = this.quote();
       const next = current ? { ...current, ...( await this.checkout.update( current.orderId, body ) ) } : await this.checkout.start( body );
